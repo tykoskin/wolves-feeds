@@ -1,0 +1,332 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//West Shore Wolves//GameSheet feed//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:West Shore Wolves Games (all teams)
+X-WR-TIMEZONE:America/Detroit
+REFRESH-INTERVAL;VALUE=DURATION:PT2H
+X-PUBLISHED-TTL:PT2H
+BEGIN:VEVENT
+UID:gamesheet-3114263-576206@tykoskin.github.io
+DTSTAMP:20261028T221711Z
+DTSTART:20261024T190000Z
+DTEND:20261024T201500Z
+SUMMARY:10U vs GTHA 10U #3 Richards (West Shore Community Ice Arena Rink #1
+ )
+LOCATION:West Shore Community Ice Arena Rink #1
+DESCRIPTION:10U West Shore Wolves home vs GTHA 10U #3 Richards. Saturday\, 
+ October 24\, 2026 at 3:00 PM EDT\, West Shore Community Ice Arena Rink #1.
+  Game #001\, status: scheduled. LiveBarn: https://livebarn.com/en/video/49
+ 05/2026-10-24/15:00
+URL:https://gamesheetstats.com/seasons/15537/teams/576206/schedule
+END:VEVENT
+BEGIN:VEVENT
+UID:gamesheet-3074483-576127@tykoskin.github.io
+DTSTAMP:20261028T221711Z
+DTSTART:20261025T183000Z
+DTEND:20261025T194500Z
+SUMMARY:12U at To Be Determined (Eagles Ice Center)
+LOCATION:Eagles Ice Center
+DESCRIPTION:12U West Shore Wolves away at To Be Determined. Sunday\, Octobe
+ r 25\, 2026 at 2:30 PM EDT\, Eagles Ice Center. Game #26221\, status: sche
+ duled. LiveBarn: https://livebarn.com/en/video/1007/2026-10-25/14:30
+URL:https://gamesheetstats.com/seasons/15537/teams/576127/schedule
+END:VEVENT
+BEGIN:VEVENT
+UID:gamesheet-3074572-576127@tykoskin.github.io
+DTSTAMP:20261028T221711Z
+DTSTART:20261031T153000Z
+DTEND:20261031T164500Z
+SUMMARY:12U vs Grand Valley Stars 12U B (Westshore)
+LOCATION:Westshore
+DESCRIPTION:12U West Shore Wolves home vs Grand Valley Stars 12U B. Saturda
+ y\, October 31\, 2026 at 11:30 AM EDT\, Westshore. Game #26253\, status: s
+ cheduled.
+URL:https://gamesheetstats.com/seasons/15537/teams/576127/schedule
+END:VEVENT
+BEGIN:VEVENT
+UID:gamesheet-3074574-576127@tykoskin.github.io
+DTSTAMP:20261028T221711Z
+DTSTART:20261101T163000Z
+DTEND:20261101T174500Z
+SUMMARY:12U vs 12U Jr Jacks - Black (Westshore)
+LOCATION:Westshore
+DESCRIPTION:12U West Shore Wolves home vs 12U Jr Jacks - Black. Sunday\, No
+ vember 1\, 2026 at 11:30 AM EST\, Westshore. Game #26255\, status: schedul
+ ed.
+URL:https://gamesheetstats.com/seasons/15537/teams/576127/schedule
+END:VEVENT
+BEGIN:VEVENT
+UID:gamesheet-3074603-576206@tykoskin.github.io
+DTSTAMP:20261028T221711Z
+DTSTART:20261101T200000Z
+DTEND:20261101T211500Z
+SUMMARY:10U at 10U Jr Jacks - Red (Trinity)
+LOCATION:Trinity
+DESCRIPTION:10U West Shore Wolves away at 10U Jr Jacks - Red. Sunday\, Nove
+ mber 1\, 2026 at 3:00 PM EST\, Trinity. Game #26618\, status: scheduled.
+URL:https://gamesheetstats.com/seasons/15537/teams/576206/schedule
+END:VEVENT
+BEGIN:VEVENT
+UID:gamesheet-3074571-576127@tykoskin.github.io
+DTSTAMP:20261028T221711Z
+DTSTART:20261113T230000Z
+DTEND:20261114T001500Z
+SUMMARY:12U vs 12U Grand Rapids Blades (Westshore)
+LOCATION:Westshore
+DESCRIPTION:12U West Shore Wolves home vs 12U Grand Rapids Blades. Friday\,
+  November 13\, 2026 at 6:00 PM EST\, Westshore. Game #26252\, status: sche
+ duled.
+URL:https://gamesheetstats.com/seasons/15537/teams/576127/schedule
+END:VEVENT
+BEGIN:VEVENT
+UID:gamesheet-3074591-576206@tykoskin.github.io
+DTSTAMP:20261028T221711Z
+DTSTART:20261114T160000Z
+DTEND:20261114T171500Z
+SUMMARY:10U at 10U Fox - Red (Southside Ice Arena Blue Rink)
+LOCATION:Southside Ice Arena Blue Rink
+DESCRIPTION:10U West Shore Wolves away at 10U Fox - Red. Saturday\, Novembe
+ r 14\, 2026 at 11:00 AM EST\, Southside Ice Arena Blue Rink. Game #26606\,
+  status: scheduled.
+URL:https://gamesheetstats.com/seasons/15537/teams/576206/schedule
+END:VEVENT
+BEGIN:VEVENT
+UID:gamesheet-3074533-576127@tykoskin.github.io
+DTSTAMP:20261028T221711Z
+DTSTART:20261114T190000Z
+DTEND:20261114T201500Z
+SUMMARY:12U at 12U Garden - Wolves (The Garden)
+LOCATION:The Garden
+DESCRIPTION:12U West Shore Wolves away at 12U Garden - Wolves. Saturday\, N
+ ovember 14\, 2026 at 2:00 PM EST\, The Garden. Game #26214\, status: sched
+ uled.
+URL:https://gamesheetstats.com/seasons/15537/teams/576127/schedule
+END:VEVENT
+BEGIN:VEVENT
+UID:gamesheet-3074626-576206@tykoskin.github.io
+DTSTAMP:20261028T221711Z
+DTSTART:20261115T163000Z
+DTEND:20261115T174500Z
+SUMMARY:10U vs 10U Mt Pleasant (West Shore Community Ice Arena Rink #1)
+LOCATION:West Shore Community Ice Arena Rink #1
+DESCRIPTION:10U West Shore Wolves home vs 10U Mt Pleasant. Sunday\, Novembe
+ r 15\, 2026 at 11:30 AM EST\, West Shore Community Ice Arena Rink #1. Game
+  #26641\, status: scheduled.
+URL:https://gamesheetstats.com/seasons/15537/teams/576206/schedule
+END:VEVENT
+BEGIN:VEVENT
+UID:gamesheet-3074511-576127@tykoskin.github.io
+DTSTAMP:20261028T221711Z
+DTSTART:20261115T200000Z
+DTEND:20261115T211500Z
+SUMMARY:12U at 12U Jr Jacks - Gold (Trinity)
+LOCATION:Trinity
+DESCRIPTION:12U West Shore Wolves away at 12U Jr Jacks - Gold. Sunday\, Nov
+ ember 15\, 2026 at 3:00 PM EST\, Trinity. Game #26249\, status: scheduled.
+URL:https://gamesheetstats.com/seasons/15537/teams/576127/schedule
+END:VEVENT
+BEGIN:VEVENT
+UID:gamesheet-3074621-576206@tykoskin.github.io
+DTSTAMP:20261028T221711Z
+DTSTART:20261121T144500Z
+DTEND:20261121T160000Z
+SUMMARY:10U at 10U Rockford - Black (Cedar Rock Sports Plex Rink #1)
+LOCATION:Cedar Rock Sports Plex Rink #1
+DESCRIPTION:10U West Shore Wolves away at 10U Rockford - Black. Saturday\, 
+ November 21\, 2026 at 9:45 AM EST\, Cedar Rock Sports Plex Rink #1. Game #
+ 26636\, status: scheduled.
+URL:https://gamesheetstats.com/seasons/15537/teams/576206/schedule
+END:VEVENT
+BEGIN:VEVENT
+UID:gamesheet-3074625-576206@tykoskin.github.io
+DTSTAMP:20261028T221711Z
+DTSTART:20261122T150000Z
+DTEND:20261122T161500Z
+SUMMARY:10U vs 10U K-Wings - Black (West Shore Community Ice Arena Rink #1)
+LOCATION:West Shore Community Ice Arena Rink #1
+DESCRIPTION:10U West Shore Wolves home vs 10U K-Wings - Black. Sunday\, Nov
+ ember 22\, 2026 at 10:00 AM EST\, West Shore Community Ice Arena Rink #1. 
+ Game #26640\, status: scheduled.
+URL:https://gamesheetstats.com/seasons/15537/teams/576206/schedule
+END:VEVENT
+BEGIN:VEVENT
+UID:gamesheet-3074575-576127@tykoskin.github.io
+DTSTAMP:20261028T221711Z
+DTSTART:20261122T163000Z
+DTEND:20261122T174500Z
+SUMMARY:12U vs 12U Jr Jacks - Gold (Westshore)
+LOCATION:Westshore
+DESCRIPTION:12U West Shore Wolves home vs 12U Jr Jacks - Gold. Sunday\, Nov
+ ember 22\, 2026 at 11:30 AM EST\, Westshore. Game #26256\, status: schedul
+ ed.
+URL:https://gamesheetstats.com/seasons/15537/teams/576127/schedule
+END:VEVENT
+BEGIN:VEVENT
+UID:gamesheet-3074504-576127@tykoskin.github.io
+DTSTAMP:20261028T221711Z
+DTSTART:20261212T170000Z
+DTEND:20261212T181500Z
+SUMMARY:12U at 12U Jr Jacks - Black (THA)
+LOCATION:THA
+DESCRIPTION:12U West Shore Wolves away at 12U Jr Jacks - Black. Saturday\, 
+ December 12\, 2026 at 12:00 PM EST\, THA. Game #26242\, status: scheduled.
+URL:https://gamesheetstats.com/seasons/15537/teams/576127/schedule
+END:VEVENT
+BEGIN:VEVENT
+UID:gamesheet-3074615-576206@tykoskin.github.io
+DTSTAMP:20261028T221711Z
+DTSTART:20261212T170000Z
+DTEND:20261212T181500Z
+SUMMARY:10U at 10U Mt Pleasant (Martin Ice Arena Rink #1)
+LOCATION:Martin Ice Arena Rink #1
+DESCRIPTION:10U West Shore Wolves away at 10U Mt Pleasant. Saturday\, Decem
+ ber 12\, 2026 at 12:00 PM EST\, Martin Ice Arena Rink #1. Game #26630\, st
+ atus: scheduled.
+URL:https://gamesheetstats.com/seasons/15537/teams/576206/schedule
+END:VEVENT
+BEGIN:VEVENT
+UID:gamesheet-3074597-576206@tykoskin.github.io
+DTSTAMP:20261028T221711Z
+DTSTART:20261213T140000Z
+DTEND:20261213T151500Z
+SUMMARY:10U at 10U Jr. Jacks - Gold (Trinity)
+LOCATION:Trinity
+DESCRIPTION:10U West Shore Wolves away at 10U Jr. Jacks - Gold. Sunday\, De
+ cember 13\, 2026 at 9:00 AM EST\, Trinity. Game #26612\, status: scheduled
+ .
+URL:https://gamesheetstats.com/seasons/15537/teams/576206/schedule
+END:VEVENT
+BEGIN:VEVENT
+UID:gamesheet-3074622-576206@tykoskin.github.io
+DTSTAMP:20261028T221711Z
+DTSTART:20261219T150000Z
+DTEND:20261219T161500Z
+SUMMARY:10U vs 10U Fox - Red (West Shore Community Ice Arena Rink #1)
+LOCATION:West Shore Community Ice Arena Rink #1
+DESCRIPTION:10U West Shore Wolves home vs 10U Fox - Red. Saturday\, Decembe
+ r 19\, 2026 at 10:00 AM EST\, West Shore Community Ice Arena Rink #1. Game
+  #26637\, status: scheduled.
+URL:https://gamesheetstats.com/seasons/15537/teams/576206/schedule
+END:VEVENT
+BEGIN:VEVENT
+UID:gamesheet-3074569-576127@tykoskin.github.io
+DTSTAMP:20261028T221711Z
+DTSTART:20261219T163000Z
+DTEND:20261219T174500Z
+SUMMARY:12U vs 12U Fox - Red (Westshore)
+LOCATION:Westshore
+DESCRIPTION:12U West Shore Wolves home vs 12U Fox - Red. Saturday\, Decembe
+ r 19\, 2026 at 11:30 AM EST\, Westshore. Game #26250\, status: scheduled.
+URL:https://gamesheetstats.com/seasons/15537/teams/576127/schedule
+END:VEVENT
+BEGIN:VEVENT
+UID:gamesheet-3074623-576206@tykoskin.github.io
+DTSTAMP:20261028T221711Z
+DTSTART:20261220T150000Z
+DTEND:20261220T161500Z
+SUMMARY:10U vs 10U Jr. Jacks - Gold (West Shore Community Ice Arena Rink #1
+ )
+LOCATION:West Shore Community Ice Arena Rink #1
+DESCRIPTION:10U West Shore Wolves home vs 10U Jr. Jacks - Gold. Sunday\, De
+ cember 20\, 2026 at 10:00 AM EST\, West Shore Community Ice Arena Rink #1.
+  Game #26638\, status: scheduled.
+URL:https://gamesheetstats.com/seasons/15537/teams/576206/schedule
+END:VEVENT
+BEGIN:VEVENT
+UID:gamesheet-3074573-576127@tykoskin.github.io
+DTSTAMP:20261028T221711Z
+DTSTART:20261220T163000Z
+DTEND:20261220T174500Z
+SUMMARY:12U vs 12U HAWK - Black (Westshore)
+LOCATION:Westshore
+DESCRIPTION:12U West Shore Wolves home vs 12U HAWK - Black. Sunday\, Decemb
+ er 20\, 2026 at 11:30 AM EST\, Westshore. Game #26254\, status: scheduled.
+URL:https://gamesheetstats.com/seasons/15537/teams/576127/schedule
+END:VEVENT
+BEGIN:VEVENT
+UID:gamesheet-3074627-576206@tykoskin.github.io
+DTSTAMP:20261028T221711Z
+DTSTART:20270109T163000Z
+DTEND:20270109T174500Z
+SUMMARY:10U vs 10U Rockford - Black (West Shore Community Ice Arena Rink #1
+ )
+LOCATION:West Shore Community Ice Arena Rink #1
+DESCRIPTION:10U West Shore Wolves home vs 10U Rockford - Black. Saturday\, 
+ January 9\, 2027 at 11:30 AM EST\, West Shore Community Ice Arena Rink #1.
+  Game #26642\, status: scheduled.
+URL:https://gamesheetstats.com/seasons/15537/teams/576206/schedule
+END:VEVENT
+BEGIN:VEVENT
+UID:gamesheet-3074469-576127@tykoskin.github.io
+DTSTAMP:20261028T221711Z
+DTSTART:20270110T010000Z
+DTEND:20270110T021500Z
+SUMMARY:12U at 12U Fox - Red (Kentwood)
+LOCATION:Kentwood
+DESCRIPTION:12U West Shore Wolves away at 12U Fox - Red. Saturday\, January
+  9\, 2027 at 8:00 PM EST\, Kentwood. Game #26207\, status: scheduled.
+URL:https://gamesheetstats.com/seasons/15537/teams/576127/schedule
+END:VEVENT
+BEGIN:VEVENT
+UID:gamesheet-3074554-576127@tykoskin.github.io
+DTSTAMP:20261028T221711Z
+DTSTART:20270110T140000Z
+DTEND:20270110T151500Z
+SUMMARY:12U at 12U HAWK - Black (Walker Ice and Fitness)
+LOCATION:Walker Ice and Fitness
+DESCRIPTION:12U West Shore Wolves away at 12U HAWK - Black. Sunday\, Januar
+ y 10\, 2027 at 9:00 AM EST\, Walker Ice and Fitness. Game #26235\, status:
+  scheduled.
+URL:https://gamesheetstats.com/seasons/15537/teams/576127/schedule
+END:VEVENT
+BEGIN:VEVENT
+UID:gamesheet-3074624-576206@tykoskin.github.io
+DTSTAMP:20261028T221711Z
+DTSTART:20270110T163000Z
+DTEND:20270110T174500Z
+SUMMARY:10U vs 10U Jr Jacks - Red (West Shore Community Ice Arena Rink #1)
+LOCATION:West Shore Community Ice Arena Rink #1
+DESCRIPTION:10U West Shore Wolves home vs 10U Jr Jacks - Red. Sunday\, Janu
+ ary 10\, 2027 at 11:30 AM EST\, West Shore Community Ice Arena Rink #1. Ga
+ me #26639\, status: scheduled.
+URL:https://gamesheetstats.com/seasons/15537/teams/576206/schedule
+END:VEVENT
+BEGIN:VEVENT
+UID:gamesheet-3074547-576127@tykoskin.github.io
+DTSTAMP:20261028T221711Z
+DTSTART:20270123T160000Z
+DTEND:20270123T171500Z
+SUMMARY:12U at Grand Valley Stars 12U B (Hudsonville Ice Rink)
+LOCATION:Hudsonville Ice Rink
+DESCRIPTION:12U West Shore Wolves away at Grand Valley Stars 12U B. Saturda
+ y\, January 23\, 2027 at 11:00 AM EST\, Hudsonville Ice Rink. Game #26228\
+ , status: scheduled.
+URL:https://gamesheetstats.com/seasons/15537/teams/576127/schedule
+END:VEVENT
+BEGIN:VEVENT
+UID:gamesheet-3074609-576206@tykoskin.github.io
+DTSTAMP:20261028T221711Z
+DTSTART:20270123T210000Z
+DTEND:20270123T221500Z
+SUMMARY:10U at 10U K-Wings - Black (Wings Event Center The Zoo)
+LOCATION:Wings Event Center The Zoo
+DESCRIPTION:10U West Shore Wolves away at 10U K-Wings - Black. Saturday\, J
+ anuary 23\, 2027 at 4:00 PM EST\, Wings Event Center The Zoo. Game #26624\
+ , status: scheduled.
+URL:https://gamesheetstats.com/seasons/15537/teams/576206/schedule
+END:VEVENT
+BEGIN:VEVENT
+UID:gamesheet-3074570-576127@tykoskin.github.io
+DTSTAMP:20261028T221711Z
+DTSTART:20270124T163000Z
+DTEND:20270124T174500Z
+SUMMARY:12U vs 12U Garden - Wolves (Westshore)
+LOCATION:Westshore
+DESCRIPTION:12U West Shore Wolves home vs 12U Garden - Wolves. Sunday\, Jan
+ uary 24\, 2027 at 11:30 AM EST\, Westshore. Game #26251\, status: schedule
+ d.
+URL:https://gamesheetstats.com/seasons/15537/teams/576127/schedule
+END:VEVENT
+END:VCALENDAR
