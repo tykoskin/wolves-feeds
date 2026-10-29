@@ -27,10 +27,13 @@ sys.path.insert(0, FEEDS_REPO if os.path.isdir(FEEDS_REPO) else HERE)
 import gamesheet_feed as gs  # noqa: E402  (reuse SEASON, TEAMS, fetch, extract_games, TZ)
 
 OUT = sys.argv[1] if len(sys.argv) > 1 else HERE
-FEED_BASE = "https://tykoskin.github.io/wolves-feeds/"
+SITE = "https://events.westshorewolves.com/"
+FEED_BASE = SITE  # feeds live at the site root
 OWA = ("https://outlook.office365.com/owa/published/951e74ceea36492c9dc438c625a09bb9@westshorewolves.com/"
        "11d17ff53239408aa6ab470c991b280b7746953958344761427/service.svc")
-CLUB_PAGE = "https://events.westshorewolves.com"
+CLUB_PAGE = ("https://outlook.office365.com/calendar/published/951e74ceea36492c9dc438c625a09bb9@westshorewolves.com/"
+             "11d17ff53239408aa6ab470c991b280b7746953958344761427/calendar.html")
+CUSTOM_DOMAIN = "events.westshorewolves.com"
 TEAM_ORDER = ["12U", "10U", "8U", "Learn to Play"]
 FINAL = ("final", "completed", "complete", "closed")
 
@@ -198,6 +201,35 @@ def combine_shared(evs):
     return out
 
 
+REDIRECT = """<!doctype html><html lang="en"><head><meta charset="utf-8">
+<title>West Shore Wolves Schedule</title><link rel="canonical" href="%s">
+<meta http-equiv="refresh" content="0; url=../"><meta name="robots" content="noindex">
+<script>location.replace("../"+location.search+location.hash)</script></head>
+<body><p>The schedule moved to <a href="../">%s</a>.</p></body></html>
+""" % (SITE, SITE)
+
+
+def write_cname():
+    """GitHub Pages custom domain. Written every build so docs/CNAME is always present."""
+    if os.path.abspath(OUT) == os.path.abspath(HERE):
+        return  # local preview build, not the published docs/ folder
+    path = os.path.join(OUT, "CNAME")
+    if not os.path.isfile(path) or open(path).read().strip() != CUSTOM_DOMAIN:
+        gs.write_atomic(path, CUSTOM_DOMAIN + "\n")
+
+
+def write_schedule_redirect():
+    """Old /schedule/ URL now forwards to the site root. Only touches OUT/schedule/."""
+    sched = os.path.join(OUT, "schedule")
+    if os.path.abspath(sched) == os.path.abspath(HERE):
+        return
+    os.makedirs(sched, exist_ok=True)
+    old_assets = os.path.join(sched, "assets")  # left over from the first /schedule/ build
+    if os.path.isdir(old_assets):
+        shutil.rmtree(old_assets)
+    gs.write_atomic(os.path.join(sched, "index.html"), REDIRECT)
+
+
 def main():
     now = datetime.now(gs.TZ)
     gsev, gs_ok = gamesheet_events()
@@ -227,6 +259,7 @@ def main():
     if os.path.abspath(src_assets) != os.path.abspath(dst_assets):
         shutil.copytree(src_assets, dst_assets, dirs_exist_ok=True)
     gs.write_atomic(os.path.join(OUT, "index.html"), page)
+    write_schedule_redirect()
     print(f"Wrote {OUT}/index.html: {len(events)} events "
           f"({sum(e['src'] == 'gamesheet' for e in events)} GameSheet games, club calendar ok={club_ok})")
     return 0
@@ -235,6 +268,10 @@ def main():
 if __name__ == "__main__":
     # Fail-soft: the schedule page must never break feed generation. Any error leaves the
     # previously published page in place and exits 0 so the workflow keeps going.
+    try:
+        write_cname()
+    except Exception as e:  # noqa: BLE001
+        print(f"WARNING CNAME: {e}", file=sys.stderr)
     try:
         rc = main()
     except Exception as e:  # noqa: BLE001

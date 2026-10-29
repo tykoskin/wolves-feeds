@@ -7,7 +7,7 @@
 <meta name="description" content="Games, practices, tournaments and rink times for the West Shore Wolves Hockey Club.">
 <meta name="theme-color" content="#192539">
 <link rel="icon" href="assets/wolves_logo.png">
-<link rel="alternate" type="application/rss+xml" title="West Shore Wolves games" href="https://tykoskin.github.io/wolves-feeds/wolves.rss">
+<link rel="alternate" type="application/rss+xml" title="West Shore Wolves games" href="wolves.rss">
 <style>
 @font-face{font-family:"WolvesDisplay";src:url("assets/Anton-Regular.woff2") format("woff2");font-display:swap}
 :root{--navy:#192539;--navy2:#223250;--navy3:#2d3f63;--gold:#CCBF7C;--gold2:#e6dcae;--ink:#16202f;--muted:#5d6878;--bg:#f3f1ea;--card:#fff;--line:#e4e0d3;--r:16px}
@@ -306,7 +306,7 @@ function copy(t){navigator.clipboard&&navigator.clipboard.writeText(t);const el=
 function foot(){
   const b=new Date(D.built);
   $("#foot").innerHTML=`<p>Updated ${fmt(b,{month:"short",day:"numeric"})} at ${fmt(b,{hour:"numeric",minute:"2-digit",timeZoneName:"short"})}. All times Eastern.</p>
-  <p>Games, rinks and scores from <a href="${D.seasonUrl}" target="_blank" rel="noopener">GameSheet</a>. Practices, tournaments and rink sessions from the <a href="${D.clubPage}" target="_blank" rel="noopener">West Shore Wolves club calendar</a>.</p><p>West Shore Wolves Hockey Club, Scottville, Michigan</p>`;
+  <p>Games, rinks and scores from <a href="${D.seasonUrl}" target="_blank" rel="noopener">GameSheet</a>. Practices, tournaments and rink sessions from the <a href="${D.clubPage}" target="_blank" rel="noopener">West Shore Wolves club calendar</a>.</p><p><a href="feeds/">All feed links (RSS and calendar)</a></p><p>West Shore Wolves Hockey Club, Scottville, Michigan</p>`;
 }
 function render(){chips();hero();list();results()}
 subs();foot();render();
