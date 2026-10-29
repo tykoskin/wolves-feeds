@@ -26,6 +26,13 @@ jobs:
       - name: Build feeds
         run: python3 gamesheet_feed.py
 
+      - name: Build schedule page
+        # Fail-soft: never blocks the feed commit below. If the club Outlook calendar
+        # cannot be read, the page is built from GameSheet only.
+        continue-on-error: true
+        timeout-minutes: 4
+        run: python3 site/build_site.py docs/schedule
+
       - name: Commit changed feeds
         run: |
           git config user.name "github-actions[bot]"
@@ -37,35 +44,3 @@ jobs:
             git commit -m "Update feeds $(date -u +'%Y-%m-%d %H:%M UTC')"
             git push
           fi
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
