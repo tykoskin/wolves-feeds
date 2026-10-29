@@ -297,16 +297,16 @@ function results(){
 }
 function subs(){
   const F=D.feedBase;
-  const feed=[["12U","wolves-12u","12U games from GameSheet"],["10U","wolves-10u","10U games from GameSheet"],["All teams","wolves","Every 12U and 10U game"]];
+  const feed=[["12U","wolves-12u","12U games from GameSheet"],["10U","wolves-10u","10U games from GameSheet"],["8U","wolves-8u","8U schedule from SportsEngine"],["All teams","wolves","Every 12U and 10U game"]];
   $("#subs").innerHTML=feed.map(([t,s,p])=>{const ics=F+s+".ics";const wc=ics.replace(/^https:/,"webcal:");
     return `<div class="sub"><h3 class="disp">${t}</h3><p>${p}</p><div class="acts"><a class="btn gold sm" href="${wc}">Subscribe</a><a class="btn ghost sm" href="https://calendar.google.com/calendar/r?cid=${encodeURIComponent(wc)}" target="_blank" rel="noopener">Google</a><button class="btn ghost sm" onclick="copy('${ics}')">Copy link</button><a class="btn ghost sm" href="${F+s}.rss">RSS</a></div></div>`}).join("")
-   +`<div class="sub"><h3 class="disp">Full club calendar</h3><p>Practices, 8U, Learn to Play, tournaments and WSCC rink times.</p><div class="acts"><a class="btn gold sm" href="${D.clubPage}" target="_blank" rel="noopener">Open club calendar</a></div></div>`;
+   +`<div class="sub"><h3 class="disp">Full club calendar</h3><p>Practices, Learn to Play, tournaments and WSCC rink times from the club Outlook calendar.</p><div class="acts"><a class="btn gold sm" href="${D.clubPage}" target="_blank" rel="noopener">Open club calendar</a></div></div>`;
 }
 function copy(t){navigator.clipboard&&navigator.clipboard.writeText(t);const el=$("#toast");el.textContent="Link copied";el.classList.add("on");setTimeout(()=>el.classList.remove("on"),1600)}
 function foot(){
   const b=new Date(D.built);
   $("#foot").innerHTML=`<p>Updated ${fmt(b,{month:"short",day:"numeric"})} at ${fmt(b,{hour:"numeric",minute:"2-digit",timeZoneName:"short"})}. All times Eastern.</p>
-  <p>Games, rinks and scores from <a href="${D.seasonUrl}" target="_blank" rel="noopener">GameSheet</a>. Practices, tournaments and rink sessions from the <a href="${D.clubPage}" target="_blank" rel="noopener">West Shore Wolves club calendar</a>.</p><p><a href="feeds/">All feed links (RSS and calendar)</a></p><p>West Shore Wolves Hockey Club, Scottville, Michigan</p>`;
+  <p>Games, rinks and scores from <a href="${D.seasonUrl}" target="_blank" rel="noopener">GameSheet</a>. 8U schedule from <a href="wolves-8u.ics">SportsEngine</a>. Practices, tournaments and rink sessions from the <a href="${D.clubPage}" target="_blank" rel="noopener">West Shore Wolves club calendar</a>.</p><p><a href="feeds/">All feed links (RSS and calendar)</a></p><p>West Shore Wolves Hockey Club, Scottville, Michigan</p>`;
 }
 function render(){chips();hero();list();results()}
 subs();foot();render();

@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
-"""Build RSS + ICS feeds of West Shore Wolves games from GameSheet's public stats pages.
+"""Build RSS + ICS feeds of West Shore Wolves games from public schedules.
 
-Source: the server-rendered game JSON embedded in
+12U and 10U: the server-rendered game JSON embedded in
 https://gamesheetstats.com/seasons/<season>/teams/<team>/schedule
+8U has no GameSheet page (age). Its feed is the public SportsEngine iCal
+calendar (SPORTSENGINE_8U). A failed SportsEngine fetch leaves
+docs/wolves-8u.rss, docs/wolves-8u.ics, and docs/sportsengine-8u.json in place.
 Standard library only. Writes into docs/ (served by GitHub Pages).
-If a team fetch fails, that team's old files are kept; exits nonzero only if every fetch fails.
+If a GameSheet team fetch fails, that team's old files are kept; exits nonzero
+only if every GameSheet fetch fails.
 """
 import html
 import json
@@ -26,6 +30,15 @@ BASE_URL = "https://events.westshorewolves.com/"
 CUSTOM_DOMAIN = "events.westshorewolves.com"  # GitHub Pages custom domain, kept in docs/CNAME
 GAME_MINUTES = 75
 TZ = ZoneInfo("America/Detroit")
+# 8U is not on GameSheet. SportsEngine publishes the team calendar as iCal
+# (the club shares it as webcal://; fetch the https URL).
+SPORTSENGINE_8U = (
+    "https://ical.sportngin.com/v3/calendar/ical?team_ids=11f18a93-0d45-5b32-b4f0-7ec931f1172f")
+SLUG_8U = "wolves-8u"
+CACHE_8U = "sportsengine-8u.json"
+TBD_RE = re.compile(r"\s*time is TBD\s*", re.I)
+TOURNAMENT_RE = re.compile(r"tournament|district|states|jamboree|showcase|classic|cup", re.I)
+GAME_RE = re.compile(r"\b(?:at|vs\.?)\b", re.I)
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs")
 UA = ("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
       "Chrome/126.0 Safari/537.36")
@@ -36,11 +49,11 @@ def schedule_url(team):
     return f"https://gamesheetstats.com/seasons/{SEASON}/teams/{team}/schedule"
 
 
-def fetch(url, tries=3):
+def fetch(url, tries=3, accept="text/html"):
     last = None
     for n in range(tries):
         try:
-            req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "text/html"})
+            req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": accept})
             with urllib.request.urlopen(req, timeout=30) as r:
                 body = r.read().decode("utf-8", "replace")
             if "Just a moment" in body[:5000] and "__next_f" not in body:
@@ -119,14 +132,215 @@ def write_atomic(path, text, newline="\n"):
     os.replace(tmp, path)
 
 
-def write_feeds(items, slug, title, page):
+def season_bounds(now=None):
+    """Current hockey season: August 1 through the following August 1.
+
+    Before August, the season that opened last August is still current.
+    GameSheet is already limited to the current season id. SportsEngine's
+    public calendar also carries last season (the sample has Jan/Feb 2026),
+    and those events are dropped.
+    """
+    now = now.astimezone(TZ) if now else datetime.now(TZ)
+    year = now.year if now.month >= 8 else now.year - 1
+    return datetime(year, 8, 1, tzinfo=TZ), datetime(year + 1, 8, 1, tzinfo=TZ)
+
+
+def unfold_ics(text):
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
+    lines = []
+    for line in text.split("\n"):
+        if line[:1] in (" ", "\t") and lines:
+            lines[-1] += line[1:]
+        elif line:
+            lines.append(line)
+    return lines
+
+
+def ics_unesc(text):
+    out, i = [], 0
+    while i < len(text):
+        if text[i] == "\\" and i + 1 < len(text):
+            n = text[i + 1]
+            out.append("\n" if n in "nN" else n)
+            i += 2
+        else:
+            out.append(text[i])
+            i += 1
+    return "".join(out)
+
+
+def ics_vevents(text):
+    """List of VEVENT property lists: (NAME, params, unescaped value)."""
+    vevents, cur = [], None
+    for line in unfold_ics(text):
+        if line == "BEGIN:VEVENT":
+            cur = []
+        elif line == "END:VEVENT" and cur is not None:
+            vevents.append(cur)
+            cur = None
+        elif cur is not None and ":" in line:
+            left, val = line.split(":", 1)
+            bits = left.split(";")
+            params = {}
+            for bit in bits[1:]:
+                if "=" in bit:
+                    k, v = bit.split("=", 1)
+                    params[k.upper()] = v.strip().strip('"')
+            cur.append((bits[0].upper(), params, ics_unesc(val)))
+    return vevents
+
+
+def parse_ics_dt(params, val):
+    """Return (aware datetime, date_only). Unknown timezones fall back to Detroit."""
+    if params.get("VALUE", "").upper() == "DATE" or re.fullmatch(r"\d{8}", val or ""):
+        return datetime.strptime(val[:8], "%Y%m%d").replace(tzinfo=TZ), True
+    zulu = val.endswith("Z")
+    raw = val[:-1] if zulu else val
+    if len(raw) == 13:  # YYYYMMDDTHHMM
+        raw += "00"
+    dt = datetime.strptime(raw[:15], "%Y%m%dT%H%M%S")
+    if zulu:
+        return dt.replace(tzinfo=timezone.utc), False
+    try:
+        tz = ZoneInfo(params.get("TZID") or "America/Detroit")
+    except Exception:  # noqa: BLE001
+        tz = TZ
+    return dt.replace(tzinfo=tz), False
+
+
+def classify_title(title, team="8U"):
+    if re.search(r"practice", title, re.I):
+        return "practice"
+    if TOURNAMENT_RE.search(title):
+        return "tournament"
+    if GAME_RE.search(title) and team in ("12U", "10U", "8U"):
+        return "game"
+    return "event"
+
+
+def clean_summary(summary):
+    """Strip a trailing 'time is TBD' note. The flag is separate from the clock."""
+    text = summary or ""
+    tbd = bool(TBD_RE.search(text))
+    title = re.sub(r"\s{2,}", " ", TBD_RE.sub(" ", text)).strip(" -")
+    return title or "8U", tbd
+
+
+def parse_sportsengine(text, now=None, team="8U"):
+    """SportsEngine VEVENTs in the current season, in the site's event shape."""
+    start_bound, end_bound = season_bounds(now)
+    events = []
+    for props in ics_vevents(text):
+        bag = {}
+        for name, params, val in props:
+            bag.setdefault(name, (params, val))
+        if "DTSTART" not in bag or "SUMMARY" not in bag:
+            continue
+        start, date_only = parse_ics_dt(*bag["DTSTART"])
+        start = start.astimezone(TZ)
+        if not (start_bound <= start < end_bound):
+            continue
+        end = None
+        if "DTEND" in bag:
+            end_dt, _date_only = parse_ics_dt(*bag["DTEND"])
+            end_dt = end_dt.astimezone(TZ)
+            if end_dt > start:
+                end = end_dt
+        title, tbd = clean_summary(bag["SUMMARY"][1])
+        loc = (bag.get("LOCATION") or (None, ""))[1].strip() or None
+        uid = (bag.get("UID") or (None, ""))[1].strip() or f"sportsengine-{team}-{start:%Y%m%dT%H%M%S}"
+        kind = classify_title(title, team)
+        ev = {"src": "sportsengine", "team": team, "kind": kind, "title": title,
+              "start": start.isoformat(), "end": end.isoformat() if end else None,
+              "tbd": tbd or date_only, "address": loc, "uid": uid}
+        if kind == "game":
+            home = re.match(rf"^(.+?)\s+at\s+{team}$", title, re.I)
+            away = re.match(rf"^(?:{team}\s+)?at\s+(.+)$", title, re.I)
+            versus = re.match(rf"^(?:{team}\s+)?vs\.?\s+(.+)$", title, re.I)
+            if home:
+                ev.update(home=True, opponent=home.group(1).strip())
+            elif versus:
+                ev.update(home=True, opponent=versus.group(1).strip())
+            elif away:
+                ev.update(home=False, opponent=away.group(1).strip())
+        events.append(ev)
+    events.sort(key=lambda e: (e["start"], e["title"]))
+    return events
+
+
+def cache_8u_path():
+    return os.path.join(OUT, CACHE_8U)
+
+
+def load_8u_cache():
+    try:
+        with open(cache_8u_path(), encoding="utf-8") as f:
+            data = json.load(f)
+        return data if isinstance(data, list) else []
+    except Exception:  # noqa: BLE001
+        return []
+
+
+def eight_u_events(now=None):
+    """Return (events, fresh). A failed fetch keeps the previous cache instead of []."""
+    try:
+        body = fetch(SPORTSENGINE_8U, accept="text/calendar, text/plain, */*")
+        events = parse_sportsengine(body, now)
+        if not events:
+            raise RuntimeError("no current-season events in SportsEngine feed")
+        write_atomic(cache_8u_path(), json.dumps(events, indent=2) + "\n")
+        return events, True
+    except Exception as e:  # noqa: BLE001
+        cached = load_8u_cache()
+        print(f"WARNING 8U SportsEngine: {e}; keeping {len(cached)} cached events", file=sys.stderr)
+        return cached, False
+
+
+def _when_label(local, tbd=False):
+    if tbd:
+        return f"{local:%a %b} {local.day} TBD".replace(" 0", " ")
+    return f"{local:%a %b} {local.day} {local:%I:%M %p}".replace(" 0", " ")
+
+
+def sportsengine_feed_items(events):
+    items = []
+    for ev in events:
+        start = datetime.fromisoformat(ev["start"])
+        local = start.astimezone(TZ)
+        end = datetime.fromisoformat(ev["end"]) if ev.get("end") else None
+        summary = f"{ev['team']} {ev['title']}"
+        when = _when_label(local, ev.get("tbd"))
+        detail = f"{local:%A, %B} {local.day}, {local:%Y}".replace(" 0", " ")
+        if ev.get("tbd"):
+            detail += " (time TBD)"
+        else:
+            clock = f"{local:%I:%M %p %Z}".replace(" 0", " ")
+            if end:
+                clock += " to " + f"{end.astimezone(TZ):%I:%M %p}".replace(" 0", " ")
+            detail += f" at {clock}"
+        desc = f"{ev['team']} West Shore Wolves: {ev['title']}. {detail}."
+        if ev.get("address"):
+            desc += f" {ev['address']}."
+        desc += " From the SportsEngine 8U calendar."
+        items.append({
+            "uid": ev.get("uid") or f"sportsengine-8u-{start:%Y%m%dT%H%M%S}",
+            "title": f"{when}: {summary}", "desc": desc, "start": start, "end": end,
+            "local": local, "loc": ev.get("rink") or ev.get("address") or "TBD",
+            "link": BASE_URL, "tbd": bool(ev.get("tbd")), "label": ev["team"],
+        })
+    return items
+
+
+def write_feeds(items, slug, title, page, source_note=None, prodid=None):
     now = datetime.now(timezone.utc)
+    source_note = source_note or f"{title}, from GameSheet. Times are Eastern (America/Detroit)."
+    prodid = prodid or "-//West Shore Wolves//GameSheet feed//EN"
     rss = ['<?xml version="1.0" encoding="UTF-8"?>',
            '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel>',
            f"<title>{html.escape(title)}</title>",
            f"<link>{html.escape(page)}</link>",
            f'<atom:link href="{BASE_URL}{slug}.rss" rel="self" type="application/rss+xml"/>',
-           f"<description>{html.escape(title)}, from GameSheet. Times are Eastern (America/Detroit).</description>",
+           f"<description>{html.escape(source_note)}</description>",
            f"<lastBuildDate>{format_datetime(now)}</lastBuildDate>", "<ttl>120</ttl>"]
     for it in items:
         rss.append("<item>"
@@ -138,17 +352,26 @@ def write_feeds(items, slug, title, page):
                    "</item>")
     rss.append("</channel></rss>")
     stamp = f"{now:%Y%m%dT%H%M%SZ}"
-    ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//West Shore Wolves//GameSheet feed//EN",
+    ics = ["BEGIN:VCALENDAR", "VERSION:2.0", f"PRODID:{prodid}",
            "CALSCALE:GREGORIAN", "METHOD:PUBLISH", f"X-WR-CALNAME:{ics_esc(title)}",
            "X-WR-TIMEZONE:America/Detroit", "REFRESH-INTERVAL;VALUE=DURATION:PT2H",
            "X-PUBLISHED-TTL:PT2H"]
     for it in items:
-        end = it["start"] + timedelta(minutes=GAME_MINUTES)
-        ics += ["BEGIN:VEVENT", f"UID:{it['uid']}", f"DTSTAMP:{stamp}",
-                f"DTSTART:{it['start']:%Y%m%dT%H%M%SZ}", f"DTEND:{end:%Y%m%dT%H%M%SZ}",
-                f"SUMMARY:{ics_esc(it['title'].split(': ', 1)[1])}",
-                f"LOCATION:{ics_esc(it['loc'])}", f"DESCRIPTION:{ics_esc(it['desc'])}",
-                f"URL:{it['link']}", "END:VEVENT"]
+        end = it.get("end") or (it["start"] + timedelta(minutes=GAME_MINUTES))
+        summary = it["title"].split(": ", 1)[1] if ": " in it["title"] else it["title"]
+        body = ["BEGIN:VEVENT", f"UID:{it['uid']}", f"DTSTAMP:{stamp}"]
+        if it.get("tbd"):
+            local = it.get("local") or it["start"].astimezone(TZ)
+            nxt = local.date() + timedelta(days=1)
+            body += [f"DTSTART;VALUE=DATE:{local:%Y%m%d}", f"DTEND;VALUE=DATE:{nxt:%Y%m%d}"]
+        else:
+            # SportsEngine instants are America/Detroit. GameSheet instants are already UTC.
+            # Both must be written as Zulu; formatting a local datetime and appending Z is wrong.
+            body += [f"DTSTART:{it['start'].astimezone(timezone.utc):%Y%m%dT%H%M%SZ}",
+                     f"DTEND:{end.astimezone(timezone.utc):%Y%m%dT%H%M%SZ}"]
+        body += [f"SUMMARY:{ics_esc(summary)}", f"LOCATION:{ics_esc(it['loc'])}",
+                 f"DESCRIPTION:{ics_esc(it['desc'])}", f"URL:{it['link']}", "END:VEVENT"]
+        ics += body
     ics.append("END:VCALENDAR")
     write_atomic(os.path.join(OUT, f"{slug}.rss"), "\n".join(rss) + "\n")
     write_atomic(os.path.join(OUT, f"{slug}.ics"), "\r\n".join(fold(l) for l in ics) + "\r\n", newline="")
@@ -159,7 +382,8 @@ def write_index(items, status):
     feeds = "".join(
         f"<li>{lbl}: <a href='../{s}.rss'>RSS</a> | <a href='../{s}.ics'>Calendar (ICS)</a> "
         f"<code>{BASE_URL}{s}.ics</code></li>"
-        for lbl, s in [("12U", "wolves-12u"), ("10U", "wolves-10u"), ("All teams", "wolves")])
+        for lbl, s in [("12U", "wolves-12u"), ("10U", "wolves-10u"),
+                       ("8U", "wolves-8u"), ("All teams", "wolves")])
     up = [it for it in items if it["start"] + timedelta(minutes=GAME_MINUTES) >= datetime.now(timezone.utc)]
     rows = "".join(
         f"<tr><td>{it['label']}</td><td>{html.escape(it['title'].split(': ', 1)[0])}</td>"
@@ -175,7 +399,7 @@ table{{border-collapse:collapse;width:100%}}td,th{{border-bottom:1px solid #ddd;
 code{{font-size:.8em;color:#555}}</style></head><body>
 <p><a href="../">&larr; Back to the schedule</a></p>
 <h1>West Shore Wolves Game Feeds</h1>
-<p>Schedules from GameSheet (Adray Community Hockey 2026/27). Updated every 2 hours. Times are Eastern.</p>
+<p>12U and 10U schedules from GameSheet (Adray Community Hockey 2026/27). 8U schedule from SportsEngine. Updated every 2 hours. Times are Eastern.</p>
 <h2>Subscribe</h2><ul>{feeds}</ul>
 <p>Calendar: copy an ICS link and add it as a subscribed calendar (Google: Other calendars, From URL; iPhone: Settings, Calendar, Accounts, Add Subscribed Calendar).</p>
 <h2>Upcoming games</h2><table><tr><th>Team</th><th>When</th><th>Game</th></tr>{rows}</table>
@@ -214,6 +438,22 @@ def main():
         except Exception as e:  # noqa: BLE001
             status[label] = "fetch failed, kept previous files"
             print(f"WARNING {label}: {e}; keeping previous files", file=sys.stderr)
+    try:
+        se, fresh = eight_u_events()
+        if fresh:
+            items = sportsengine_feed_items(se)
+            n = len(items)
+            write_feeds(items, SLUG_8U, "West Shore Wolves 8U", BASE_URL,
+                        source_note=("West Shore Wolves 8U schedule from SportsEngine. "
+                                     "Times are Eastern (America/Detroit)."),
+                        prodid="-//West Shore Wolves//SportsEngine feed//EN")
+            status["8U"] = f"{n} events from SportsEngine"
+            print(f"8U: {n} SportsEngine events written to docs/{SLUG_8U}.rss/.ics")
+        else:
+            status["8U"] = "fetch failed, kept previous files"
+    except Exception as e:  # noqa: BLE001
+        status["8U"] = "fetch failed, kept previous files"
+        print(f"WARNING 8U: {e}; keeping previous files", file=sys.stderr)
     if ok == 0:
         print("ERROR: all fetches failed; nothing updated", file=sys.stderr)
         return 1

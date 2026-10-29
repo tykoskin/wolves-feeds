@@ -5,7 +5,11 @@ Sources (standard library only, same approach as gamesheet_feed.py):
   1. GameSheet public schedule pages for 12U and 10U (games, rinks, opponents, logos, scores, LiveBarn).
   2. The club's published Outlook calendar "West Shore Wolves Events" (the calendar behind
      events.westshorewolves.com): practices, tournaments, 8U, Learn to Play and WSCC rink sessions.
+  3. SportsEngine's public iCal for 8U (no GameSheet at that age). See gamesheet_feed.SPORTSENGINE_8U.
 GameSheet wins for any 12U/10U game it lists; the matching club calendar entry only adds its street address.
+SportsEngine wins for an 8U-only item Outlook also lists (same day, same title). A club event posted
+for 8U and another team stays a single Outlook card. If the SportsEngine fetch fails, the previous
+8U events are kept (docs/sportsengine-8u.json, or the last built page).
 
 Usage: python3 build_site.py [output_dir]   (default: folder of this script)
 """
@@ -166,9 +170,90 @@ def name_addresses(evs):
             if len(n) > len(names.get(k, "")):
                 names[k] = n
     for e in evs:
-        if e["src"] == "club" and not e.get("rink") and norm(e.get("address")) in names:
+        if e["src"] in ("club", "sportsengine") and not e.get("rink") and norm(e.get("address")) in names:
             e["rink"] = names[norm(e["address"])]
     return evs
+
+
+def norm_title(title):
+    """Lowercase, punctuation-free, leading team name removed. Used to pair calendars."""
+    text = re.sub(r"[^a-z0-9]+", " ", (title or "").lower()).strip()
+    return re.sub(r"^(?:12u|10u|8u|learn to play)\s+", "", text)
+
+
+def event_day(iso):
+    dt = datetime.fromisoformat(iso)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=gs.TZ)
+    return dt.astimezone(gs.TZ).date()
+
+
+def merge_sportsengine(evs, se_events):
+    """Add SportsEngine 8U events without duplicating the club calendar.
+
+    Same item: same America/Detroit calendar day and the same title (punctuation
+    and a leading "8U" ignored). Each SportsEngine event consumes at most one
+    Outlook 8U row, the one with the closest start, so two practices on one day
+    stay two practices.
+
+    8U-only rows (practices, jamborees) keep the SportsEngine copy and drop the
+    Outlook copy. The rink name is filled in afterward from the street address,
+    the same way other club events get one. Rows Outlook lists for 8U and for
+    another team (Try Hockey, Picture Day, the Halloween skate) are one shared
+    event: the Outlook rows stay, so they can collapse into a single multi-team
+    card, and the SportsEngine copy is not added.
+
+    An Outlook 8U row with no SportsEngine twin is kept. A SportsEngine row with
+    no Outlook twin is added.
+    """
+    if not se_events:
+        return evs
+    used = set()
+    kept = []
+    for se in sorted(se_events, key=lambda e: e["start"]):
+        day, title = event_day(se["start"]), norm_title(se.get("title"))
+        if se.get("kind") in ("event", "tournament"):
+            shared = any(
+                c.get("src") == "club" and c.get("team") not in (None, "8U")
+                and event_day(c["start"]) == day and norm_title(c.get("title")) == title
+                for c in evs)
+            if shared:
+                continue
+        cands = [i for i, c in enumerate(evs)
+                 if i not in used and c.get("src") == "club" and c.get("team") == "8U"
+                 and event_day(c["start"]) == day and norm_title(c.get("title")) == title]
+        if cands:
+            se_dt = datetime.fromisoformat(se["start"])
+            best = min(cands, key=lambda i: abs(_aware(evs[i]["start"]) - se_dt))
+            used.add(best)
+            twin = evs[best]
+            if twin.get("rink") and not se.get("rink"):
+                se["rink"] = twin["rink"]
+            if twin.get("address") and not se.get("address"):
+                se["address"] = twin["address"]
+        kept.append(dict(se))
+    return [e for i, e in enumerate(evs) if i not in used] + kept
+
+
+def _aware(iso):
+    dt = datetime.fromisoformat(iso)
+    return dt if dt.tzinfo else dt.replace(tzinfo=gs.TZ)
+
+
+def previous_sportsengine(path):
+    """8U events already embedded in a built page, used when the feed and cache are both empty."""
+    try:
+        text = open(path, encoding="utf-8").read()
+    except OSError:
+        return []
+    m = re.search(r"const D=(\{.*?\});\nconst TZ", text)
+    if not m:
+        return []
+    try:
+        data = json.loads(m.group(1))
+    except json.JSONDecodeError:
+        return []
+    return [e for e in data.get("events", []) if e.get("src") == "sportsengine"]
 
 
 def dedupe(evs):
@@ -240,17 +325,24 @@ def main():
     except Exception as e:  # noqa: BLE001
         print(f"WARNING club calendar: {e}", file=sys.stderr)
         club, club_ok = [], False
-    if not gsev and not club:
+    se, se_ok = gs.eight_u_events(now)
+    if not se_ok and not se:
+        se = previous_sportsengine(os.path.join(OUT, "index.html"))
+        if se:
+            print(f"8U SportsEngine: restored {len(se)} events from the previous page", file=sys.stderr)
+    if not gsev and not club and not se:
         print("ERROR: no data from any source; page not rebuilt", file=sys.stderr)
         return 1
-    events = combine_shared(dedupe(name_addresses(merge(gsev, club, gs_ok))))
+    merged = merge_sportsengine(merge(gsev, club, gs_ok), se)
+    events = combine_shared(dedupe(name_addresses(merged)))
     present = {t for e in events for t in e.get("teams", [e["team"]])}
     teams = [t for t in TEAM_ORDER if t in present]
     teams += sorted(present - set(teams) - {"Open Rink"})
     if any(e["team"] == "Open Rink" for e in events):
         teams.append("Open Rink")
     data = {"built": now.isoformat(), "teams": teams, "events": events, "clubOk": club_ok,
-            "gamesheetOk": gs_ok, "season": gs.SEASON, "feedBase": FEED_BASE, "clubPage": CLUB_PAGE,
+            "gamesheetOk": gs_ok, "sportsengineOk": se_ok, "season": gs.SEASON,
+            "feedBase": FEED_BASE, "clubPage": CLUB_PAGE,
             "seasonUrl": f"https://gamesheetstats.com/seasons/{gs.SEASON}"}
     tpl = open(os.path.join(HERE, "template.html"), encoding="utf-8").read()
     page = tpl.replace("/*__DATA__*/null", json.dumps(data, separators=(",", ":")).replace("</", "<\\/"))
@@ -260,8 +352,10 @@ def main():
         shutil.copytree(src_assets, dst_assets, dirs_exist_ok=True)
     gs.write_atomic(os.path.join(OUT, "index.html"), page)
     write_schedule_redirect()
+    n_se = sum(e.get("src") == "sportsengine" for e in events)
     print(f"Wrote {OUT}/index.html: {len(events)} events "
-          f"({sum(e['src'] == 'gamesheet' for e in events)} GameSheet games, club calendar ok={club_ok})")
+          f"({sum(e['src'] == 'gamesheet' for e in events)} GameSheet games, "
+          f"{n_se} SportsEngine 8U, club calendar ok={club_ok}, sportsengine fresh={se_ok})")
     return 0
 
 
