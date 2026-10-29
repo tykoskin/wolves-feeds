@@ -22,7 +22,8 @@ TEAMS = [  # (team id, label, file slug)
     (576127, "12U", "wolves-12u"),
     (576206, "10U", "wolves-10u"),
 ]
-BASE_URL = "https://tykoskin.github.io/wolves-feeds/"
+BASE_URL = "https://events.westshorewolves.com/"
+CUSTOM_DOMAIN = "events.westshorewolves.com"  # GitHub Pages custom domain, kept in docs/CNAME
 GAME_MINUTES = 75
 TZ = ZoneInfo("America/Detroit")
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs")
@@ -156,7 +157,7 @@ def write_feeds(items, slug, title, page):
 def write_index(items, status):
     now = datetime.now(TZ)
     feeds = "".join(
-        f"<li>{lbl}: <a href='{s}.rss'>RSS</a> | <a href='{s}.ics'>Calendar (ICS)</a> "
+        f"<li>{lbl}: <a href='../{s}.rss'>RSS</a> | <a href='../{s}.ics'>Calendar (ICS)</a> "
         f"<code>{BASE_URL}{s}.ics</code></li>"
         for lbl, s in [("12U", "wolves-12u"), ("10U", "wolves-10u"), ("All teams", "wolves")])
     up = [it for it in items if it["start"] + timedelta(minutes=GAME_MINUTES) >= datetime.now(timezone.utc)]
@@ -168,10 +169,11 @@ def write_index(items, status):
     page = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>West Shore Wolves Game Feeds</title>
-<link rel="alternate" type="application/rss+xml" title="Wolves games" href="wolves.rss">
+<link rel="alternate" type="application/rss+xml" title="Wolves games" href="../wolves.rss">
 <style>body{{font-family:system-ui,sans-serif;max-width:860px;margin:2em auto;padding:0 1em}}
 table{{border-collapse:collapse;width:100%}}td,th{{border-bottom:1px solid #ddd;padding:6px;text-align:left}}
 code{{font-size:.8em;color:#555}}</style></head><body>
+<p><a href="../">&larr; Back to the schedule</a></p>
 <h1>West Shore Wolves Game Feeds</h1>
 <p>Schedules from GameSheet (Adray Community Hockey 2026/27). Updated every 2 hours. Times are Eastern.</p>
 <h2>Subscribe</h2><ul>{feeds}</ul>
@@ -180,11 +182,23 @@ code{{font-size:.8em;color:#555}}</style></head><body>
 <p><small>Last updated {now:%b} {now.day}, {now:%Y} {now.hour % 12 or 12}:{now:%M %p %Z}.</small></p><ul><small>{note}</small></ul>
 </body></html>
 """
-    write_atomic(os.path.join(OUT, "index.html"), page)
+    os.makedirs(os.path.join(OUT, "feeds"), exist_ok=True)
+    write_atomic(os.path.join(OUT, "feeds", "index.html"), page)
+
+
+def write_cname():
+    """Keep the Pages custom domain file in place (never removed by this script)."""
+    path = os.path.join(OUT, "CNAME")
+    try:
+        if not os.path.isfile(path) or open(path).read().strip() != CUSTOM_DOMAIN:
+            write_atomic(path, CUSTOM_DOMAIN + "\n")
+    except Exception as e:  # noqa: BLE001
+        print(f"WARNING CNAME: {e}", file=sys.stderr)
 
 
 def main():
     os.makedirs(OUT, exist_ok=True)
+    write_cname()
     all_items, status, ok = [], {}, 0
     for team, label, slug in TEAMS:
         try:

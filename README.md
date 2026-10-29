@@ -9,7 +9,10 @@ RSS and calendar (ICS) feeds of West Shore Wolves 12U and 10U games, built from 
 | 10U | https://tykoskin.github.io/wolves-feeds/wolves-10u.rss | https://tykoskin.github.io/wolves-feeds/wolves-10u.ics |
 | All | https://tykoskin.github.io/wolves-feeds/wolves.rss | https://tykoskin.github.io/wolves-feeds/wolves.ics |
 
-Landing page: https://tykoskin.github.io/wolves-feeds/
+Schedule page: https://events.westshorewolves.com/ (built by `site/build_site.py`; `/schedule/` redirects there).
+Feed links page: https://events.westshorewolves.com/feeds/
+
+The feeds are also reachable at https://events.westshorewolves.com/<file> (same file names). `docs/CNAME` holds the custom domain and is rewritten by the build; do not delete it.
 
 ## How it works
 - `gamesheet_feed.py` (Python 3.9+, standard library only) downloads
