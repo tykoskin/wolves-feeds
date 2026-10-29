@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>West Shore Wolves Schedule</title>
+<meta name="description" content="Games, practices, tournaments and rink times for the West Shore Wolves Hockey Club.">
+<meta name="theme-color" content="#192539">
+<link rel="icon" href="assets/wolves_logo.png">
+<link rel="alternate" type="application/rss+xml" title="West Shore Wolves games" href="https://tykoskin.github.io/wolves-feeds/wolves.rss">
+<style>
+@font-face{font-family:"WolvesDisplay";src:url("assets/Anton-Regular.woff2") format("woff2");font-display:swap}
+:root{--navy:#192539;--navy2:#223250;--navy3:#2d3f63;--gold:#CCBF7C;--gold2:#e6dcae;--ink:#16202f;--muted:#5d6878;--bg:#f3f1ea;--card:#fff;--line:#e4e0d3;--r:16px}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+a{color:inherit}
+.disp{font-family:"WolvesDisplay",Impact,"Arial Narrow",sans-serif;letter-spacing:.02em;font-weight:400}
+.wrap{max-width:1120px;margin:0 auto;padding:0 16px}
+/* header */
+header.top{background:var(--navy);color:#fff;position:relative;overflow:hidden}
+header.top:after{content:"";position:absolute;inset:auto -10% -60px -10%;height:120px;background:radial-gradient(60% 100% at 50% 100%,rgba(204,191,124,.18),transparent);pointer-events:none}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none}
+.brand img{height:54px;width:auto;display:block}
+.brand .tag{color:var(--gold);font-size:26px;line-height:1;border-left:2px solid rgba(204,191,124,.4);padding-left:12px;text-transform:uppercase}
+.nav{display:flex;gap:8px}
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:10px 16px;font-weight:700;font-size:14px;text-decoration:none;border:0;cursor:pointer;white-space:nowrap}
+.btn.gold{background:var(--gold);color:var(--navy)}
+.btn.gold:hover{background:var(--gold2)}
+.btn.ghost{background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.18)}
+.btn.ghost:hover{background:rgba(255,255,255,.16)}
+.btn.line{background:#fff;color:var(--navy);border:1px solid var(--line)}
+.btn.line:hover{border-color:var(--navy)}
+.btn.sm{padding:7px 12px;font-size:13px}
+.hide-sm{display:none}
+/* hero */
+.hero{padding:8px 0 30px}
+.eyebrow{color:var(--gold);font-weight:800;letter-spacing:.14em;text-transform:uppercase;font-size:12px;margin:0 0 10px}
+.hcard{background:linear-gradient(135deg,var(--navy2),var(--navy3));border:1px solid rgba(204,191,124,.25);border-radius:22px;padding:20px;display:grid;gap:18px;box-shadow:0 20px 40px -20px rgba(0,0,0,.5)}
+.match{display:flex;align-items:center;gap:14px}
+.crest{width:58px;height:58px;border-radius:50%;background:#fff;display:grid;place-items:center;flex:none;overflow:hidden;border:2px solid var(--gold)}
+.crest img{width:82%;height:82%;object-fit:contain}
+.crest.us{background:var(--navy)}
+.crest.txt{font-weight:900;color:var(--navy);font-size:18px}
+.vs{color:var(--gold);font-size:22px}
+.htitle{font-size:40px;line-height:.95;margin:0;text-transform:uppercase;color:#fff}
+.hmeta{display:flex;flex-wrap:wrap;gap:8px 16px;color:#d9deea;font-size:15px}
+.hmeta b{color:#fff}
+.pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.p-home{background:var(--gold);color:var(--navy)}
+.p-away{background:transparent;color:var(--gold);box-shadow:inset 0 0 0 1.5px var(--gold)}
+.cd{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.cd div{background:rgba(0,0,0,.22);border-radius:12px;padding:10px 4px;text-align:center}
+.cd b{display:block;font-family:"WolvesDisplay",Impact,sans-serif;font-weight:400;font-size:38px;line-height:1;color:var(--gold)}
+.cd span{font-size:11px;color:#b9c1d3;text-transform:uppercase;letter-spacing:.1em}
+.hact{display:flex;flex-wrap:wrap;gap:8px}
+.live{color:var(--gold);font-weight:800}
+/* filters */
+.filters{position:sticky;top:0;z-index:20;background:rgba(243,241,234,.94);backdrop-filter:saturate(1.4) blur(8px);border-bottom:1px solid var(--line)}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:12px 0 8px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1.5px solid var(--navy);background:transparent;color:var(--navy);border-radius:999px;padding:8px 15px;font-weight:800;font-size:14px;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--navy);color:var(--gold)}
+.chip .n{opacity:.6;font-weight:600;margin-left:4px;font-size:12px}
+.types{display:flex;gap:6px;padding:0 0 12px;overflow-x:auto;scrollbar-width:none}
+.type{flex:none;border:0;background:#e7e3d6;color:var(--muted);border-radius:8px;padding:6px 11px;font-weight:700;font-size:13px;cursor:pointer}
+.type[aria-pressed=true]{background:var(--gold);color:var(--navy)}
+/* list */
+main{padding:18px 0 40px}
+h2.sec{font-size:34px;margin:28px 0 12px;color:var(--navy);text-transform:uppercase;display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+h2.sec small{font-family:system-ui,sans-serif;font-size:13px;color:var(--muted);text-transform:none;letter-spacing:0}
+.day{display:grid;grid-template-columns:1fr;gap:8px;margin:0 0 18px}
+.dhead{display:flex;align-items:baseline;gap:10px;position:sticky;top:96px;background:var(--bg);padding:6px 0;z-index:5}
+.dhead .d{font-size:24px;color:var(--navy);text-transform:uppercase}
+.dhead .rel{font-size:12px;font-weight:800;color:var(--navy);background:var(--gold);border-radius:6px;padding:2px 7px;text-transform:uppercase;letter-spacing:.06em}
+.ev{background:var(--card);border:1px solid var(--line);border-radius:var(--r);display:grid;grid-template-columns:74px 1fr;overflow:hidden;position:relative}
+.ev:before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--tc,#9aa3b2)}
+.ev .t{padding:14px 6px 14px 14px;font-weight:800;color:var(--navy);font-size:15px;line-height:1.15}
+.ev .t small{display:block;font-weight:600;color:var(--muted);font-size:12px;margin-top:3px}
+.ev .b{padding:12px 14px 12px 4px;min-width:0}
+.ev .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ev h3{margin:4px 0 2px;font-size:17px;line-height:1.25;color:var(--ink)}
+.ev h3 .vsw{color:var(--muted);font-weight:600}
+.ev .m{color:var(--muted);font-size:14px;display:flex;flex-wrap:wrap;gap:2px 12px;margin-top:2px}
+.ev .m a{text-decoration:none;border-bottom:1px dotted #9aa3b2}
+.ev .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.ev .ol{width:34px;height:34px;border-radius:50%;object-fit:contain;background:#fff;border:1px solid var(--line);flex:none}
+.tp{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:var(--tc);color:var(--tt,#fff)}
+.kind{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.ev.home .p-home,.ev.away .p-away{font-size:10px}
+.ev .p-away{color:var(--navy);box-shadow:inset 0 0 0 1.5px var(--navy)}
+.more{display:block;margin:10px auto 0}
+.empty{background:var(--card);border:1px dashed var(--line);border-radius:var(--r);padding:24px;text-align:center;color:var(--muted)}
+/* results */
+.res{display:grid;gap:8px}
+.rc{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center}
+.rc .sc{font-family:"WolvesDisplay",Impact,sans-serif;font-size:30px;color:var(--navy);text-align:right;line-height:1}
+.rc .ns{font-size:12px;color:var(--muted);text-align:right}
+.rc .w{color:#2f7a3c}.rc .l{color:#a33a2c}
+.rc .meta{grid-column:1/-1;color:var(--muted);font-size:13px}
+/* subscribe */
+.subs{display:grid;gap:10px}
+.sub{background:var(--navy);color:#fff;border-radius:var(--r);padding:16px;display:grid;gap:10px}
+.sub h3{margin:0;font-size:26px;color:var(--gold);text-transform:uppercase}
+.sub p{margin:0;color:#c9d0de;font-size:14px}
+.sub .acts{display:flex;flex-wrap:wrap;gap:8px}
+.help{color:var(--muted);font-size:14px;line-height:1.5}
+footer{background:var(--navy);color:#b9c1d3;font-size:13px;padding:24px 0 calc(24px + env(safe-area-inset-bottom))}
+footer a{color:var(--gold)}
+/* menu */
+.menu{position:relative;display:inline-block}
+.menu .pop{position:absolute;z-index:30;top:calc(100% + 6px);left:0;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 30px -10px rgba(0,0,0,.3);padding:6px;display:none;min-width:190px}
+.menu.open .pop{display:block}
+.pop a,.pop button{display:block;width:100%;text-align:left;padding:9px 10px;border-radius:8px;text-decoration:none;font-size:14px;color:var(--ink);background:none;border:0;cursor:pointer;font-weight:600}
+.pop a:hover,.pop button:hover{background:#f1eee4}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--navy);color:var(--gold);padding:10px 16px;border-radius:999px;font-weight:700;opacity:0;transition:.25s;pointer-events:none;z-index:50}
+.toast.on{opacity:1}
+@media (min-width:720px){
+  .hide-sm{display:inline-flex}
+  .brand img{height:70px}
+  .brand .tag{font-size:32px}
+  .hero{padding:16px 0 40px}
+  .hcard{grid-template-columns:1.4fr 1fr;padding:30px;align-items:center}
+  .htitle{font-size:58px}
+  .crest{width:76px;height:76px}
+  .cd b{font-size:52px}
+  .dhead{top:100px}
+  .ev{grid-template-columns:96px 1fr}
+  .ev .t{font-size:17px;padding-left:20px}
+  .subs{grid-template-columns:repeat(3,1fr)}
+  .res{grid-template-columns:repeat(2,1fr)}
+  h2.sec{font-size:40px}
+}
+@media (min-width:1024px){
+  .layout{display:grid;grid-template-columns:1fr 340px;gap:28px;align-items:start}
+  .side{position:sticky;top:110px}
+  .side .subs{grid-template-columns:1fr}
+  .side h2.sec:first-child{margin-top:0}
+  .res{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="bar">
+      <a class="brand" href="#"><img src="assets/wolves_logo.png" alt="West Shore Wolves Hockey Club"><span class="tag disp">Schedule</span></a>
+      <nav class="nav"><a class="btn ghost hide-sm" href="#results">Results</a><a class="btn gold" href="#subscribe">Subscribe</a></nav>
+    </div>
+    <section class="hero" id="hero"></section>
+  </div>
+</header>
+<div class="filters"><div class="wrap"><div class="chips" id="chips" role="toolbar" aria-label="Team"></div><div class="types" id="types" role="toolbar" aria-label="Event type"></div></div></div>
+<main class="wrap">
+  <div class="layout">
+    <section><h2 class="sec disp" id="upcoming">Upcoming <small id="count"></small></h2><div id="list"></div></section>
+    <aside class="side">
+      <h2 class="sec disp" id="results">Results <small id="rnote"></small></h2><div class="res" id="res"></div>
+      <h2 class="sec disp" id="subscribe">Subscribe</h2>
+      <div class="subs" id="subs"></div>
+      <p class="help">On iPhone, Mac or Outlook, tap <b>Subscribe</b> and confirm. On Android or Google Calendar, use <b>Google</b>. Calendars refresh on their own about every 2 hours.</p>
+    </aside>
+  </div>
+</main>
+<footer><div class="wrap" id="foot"></div></footer>
+<div class="toast" id="toast"></div>
+<script>
+const D=/*__DATA__*/null;
+const TZ="America/Detroit";
+const TEAMCOL={"12U":["#CCBF7C","#192539"],"10U":["#192539","#CCBF7C"],"8U":["#3f6e9e","#fff"],"Learn to Play":["#4f8a5b","#fff"],"Open Rink":["#8b93a1","#fff"],"Club":["#6b4f7d","#fff"]};
+const KIND={game:"Game",practice:"Practice",tournament:"Tournament",event:"Event",rink:"Rink session"};
+const TYPES=[["all","Everything"],["game","Games"],["practice","Practices"],["tournament","Tournaments and events"]];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt=(d,o)=>new Intl.DateTimeFormat("en-US",{timeZone:TZ,...o}).format(d);
+const dayKey=d=>fmt(d,{year:"numeric",month:"2-digit",day:"2-digit"});
+const time=e=>e.tbd?"TBD":fmt(new Date(e.start),{hour:"numeric",minute:"2-digit"}).replace(":00","");
+D.events.forEach(e=>{e.s=new Date(e.start);e.e=e.end?new Date(e.end):new Date(e.s.getTime()+75*6e4);});
+let state={team:"All",type:"all",limit:12};
+const now=()=>new Date();
+function teamPill(t){const c=TEAMCOL[t]||TEAMCOL.Club;return `<span class="tp" style="--tc:${c[0]};--tt:${c[1]}">${esc(t)}</span>`}
+function headline(e){
+  if(e.teams&&e.teams.length>1)return esc(e.title);
+  if(e.kind==="game"&&e.opponent) return `${esc(e.team)} <span class="vsw">${e.home?"vs":"at"}</span> ${esc(e.opponent)}`;
+  return esc(e.kind==="practice"&&/^practice$/i.test(e.title)?`${e.team} Practice`:e.title);
+}
+function where(e){return e.rink||(e.address&&e.address.split(",")[0])||""}
+function maps(a){return "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(a)}
+function calText(e){return e.kind==="game"&&e.opponent?`Wolves ${e.team} ${e.home?"vs":"at"} ${e.opponent}`:`Wolves ${e.team}: ${e.kind==="practice"&&/^practice$/i.test(e.title)?"Practice":e.title}`}
+function z(d){return d.toISOString().replace(/[-:]/g,"").replace(/\.\d{3}/,"")}
+function ymd(d){return fmt(d,{year:"numeric",month:"2-digit",day:"2-digit"}).replace(/(\d+)\/(\d+)\/(\d+)/,"$3$1$2")}
+function gcal(e){
+  const loc=[e.rink,e.address].filter(Boolean).join(", ");
+  const dates=e.tbd?`${ymd(e.s)}/${ymd(new Date(e.s.getTime()+864e5))}`:`${z(e.s)}/${z(e.e)}`;
+  const det=[e.tbd?"Time TBD.":"",e.livebarn?"LiveBarn: "+e.livebarn:"",e.link?"GameSheet: "+e.link:""].filter(Boolean).join("\n");
+  return "https://calendar.google.com/calendar/render?action=TEMPLATE&text="+encodeURIComponent(calText(e))+"&dates="+dates+"&location="+encodeURIComponent(loc)+"&details="+encodeURIComponent(det);
+}
+function icsFile(i){
+  const e=FILTERED_ALL[i];const x=s=>String(s).replace(/\\/g,"\\\\").replace(/[;,]/g,m=>"\\"+m).replace(/\n/g,"\\n");
+  const loc=[e.rink,e.address].filter(Boolean).join(", ");
+  const L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//West Shore Wolves//Schedule//EN","BEGIN:VEVENT","UID:"+z(e.s)+"-"+encodeURIComponent(e.team)+"-"+i+"@westshorewolves","DTSTAMP:"+z(new Date()),
+    ...(e.tbd?["DTSTART;VALUE=DATE:"+ymd(e.s),"DTEND;VALUE=DATE:"+ymd(new Date(e.s.getTime()+864e5))]:["DTSTART:"+z(e.s),"DTEND:"+z(e.e)]),
+    "SUMMARY:"+x(calText(e)),...(loc?["LOCATION:"+x(loc)]:[]),...(e.link?["URL:"+e.link]:[]),"END:VEVENT","END:VCALENDAR"];
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([L.join("\r\n")],{type:"text/calendar"}));a.download="wolves-event.ics";a.click();
+}
+function addMenu(e,i,cls="btn line sm"){
+  return `<span class="menu"><button class="${cls}" onclick="tog(this)">+ Add to calendar</button><span class="pop"><a href="${gcal(e)}" target="_blank" rel="noopener">Google Calendar</a><button onclick="icsFile(${i})">Apple or Outlook (.ics)</button></span></span>`;
+}
+function tog(b){const m=b.parentNode;const o=m.classList.contains("open");document.querySelectorAll(".menu.open").forEach(x=>x.classList.remove("open"));if(!o)m.classList.add("open")}
+document.addEventListener("click",ev=>{if(!ev.target.closest(".menu"))document.querySelectorAll(".menu.open").forEach(x=>x.classList.remove("open"))});
+let FILTERED_ALL=D.events;
+function matches(e){
+  if(state.team==="All"){if(e.team==="Open Rink")return false}else if(!(e.teams||[e.team]).includes(state.team))return false;
+  if(state.type==="all")return true;
+  if(state.type==="tournament")return e.kind==="tournament"||e.kind==="event";
+  return e.kind===state.type;
+}
+function chips(){
+  const up=D.events.filter(e=>e.e>now());
+  const cnt=t=>up.filter(e=>t==="All"?e.team!=="Open Rink":(e.teams||[e.team]).includes(t)).length;
+  $("#chips").innerHTML=["All",...D.teams].map(t=>`<button class="chip" aria-pressed="${state.team===t}" onclick="setTeam('${t}')">${t==="All"?"All teams":esc(t)}<span class="n">${cnt(t)}</span></button>`).join("");
+  const showTypes=state.team!=="Open Rink";
+  $("#types").innerHTML=showTypes?TYPES.map(([k,l])=>`<button class="type" aria-pressed="${state.type===k}" onclick="setType('${k}')">${l}</button>`).join(""):"";
+}
+function setTeam(t){state.team=t;state.limit=12;if(t==="Open Rink")state.type="all";render()}
+function setType(k){state.type=k;state.limit=12;render()}
+let heroEv=null;
+function hero(){
+  const n=now();
+  const pool=D.events.filter(e=>e.e>n&&matches(e));
+  const games=pool.filter(e=>e.kind==="game");
+  const e=(state.type==="all"&&state.team!=="Open Rink"?(games[0]||pool[0]):pool[0]);
+  heroEv=e;
+  if(!e){$("#hero").innerHTML=`<p class="eyebrow">Next up</p><div class="hcard"><h1 class="htitle disp">Nothing scheduled yet</h1></div>`;return}
+  const i=D.events.indexOf(e);
+  const us=`<div class="crest us"><img src="assets/wolves_logo.png" alt=""></div>`;
+  const opp=e.oppLogo?`<div class="crest"><img src="${esc(e.oppLogo)}" alt=""></div>`:(e.opponent?`<div class="crest txt">${esc(e.opponent.replace(/^\d+U\s*/,"").split(/[^A-Za-z0-9]+/).filter(w=>w&&!/^\d+U$/i.test(w)).map(w=>w[0]).join("").slice(0,3).toUpperCase())}</div>`:"");
+  const title=e.kind==="game"&&e.opponent?`${e.home?"vs":"at"} ${esc(e.opponent.replace(/^\d+U\s+/,""))}`:headline(e);
+  const date=fmt(e.s,{weekday:"long",month:"long",day:"numeric"});
+  $("#hero").innerHTML=`<p class="eyebrow">Next up${state.team!=="All"?" for "+esc(state.team):""}</p>
+  <div class="hcard"><div style="display:grid;gap:14px">
+    <div class="row" style="display:flex;gap:8px;align-items:center">${teamPill(e.team)}${e.kind==="game"&&e.home!=null?`<span class="pill ${e.home?"p-home":"p-away"}">${e.home?"Home":"Away"}</span>`:`<span class="pill p-away">${KIND[e.kind]}</span>`}${e.gameType&&e.gameType!=="regular season"?`<span class="pill p-away">${esc(e.gameType)}</span>`:""}</div>
+    ${e.kind==="game"?`<div class="match">${us}<span class="vs disp">${e.home?"VS":"AT"}</span>${opp}</div>`:""}
+    <h1 class="htitle disp">${title}</h1>
+    <div class="hmeta"><span><b>${date}</b></span><span>${e.tbd?"Time TBD":time(e)}</span>${where(e)?`<span>${esc(where(e))}</span>`:""}</div>
+  </div><div style="display:grid;gap:14px">
+    <div class="cd" id="cd"></div>
+    <div class="hact">${addMenu(e,i,"btn gold")}${e.address?`<a class="btn ghost" href="${maps(e.address)}" target="_blank" rel="noopener">Directions</a>`:""}${e.livebarn?`<a class="btn ghost" href="${esc(e.livebarn)}" target="_blank" rel="noopener">Watch on LiveBarn</a>`:""}</div>
+  </div></div>`;
+  tick();
+}
+function tick(){
+  const el=$("#cd");if(!el||!heroEv)return;
+  let ms=heroEv.s-now();
+  if(ms<=0){el.innerHTML=`<div style="grid-column:1/-1"><b class="live">LIVE</b><span>Happening now</span></div>`;return}
+  const d=Math.floor(ms/864e5),h=Math.floor(ms/36e5)%24,m=Math.floor(ms/6e4)%60,s=Math.floor(ms/1e3)%60;
+  el.innerHTML=[[d,"Days"],[h,"Hours"],[m,"Min"],[s,"Sec"]].map(([v,l])=>`<div><b>${String(v).padStart(2,"0")}</b><span>${l}</span></div>`).join("");
+}
+setInterval(()=>{tick();if(heroEv&&heroEv.e<now())render()},1000);
+function relDay(d){const t=dayKey(now()),k=dayKey(d),tm=dayKey(new Date(now().getTime()+864e5));return k===t?"Today":k===tm?"Tomorrow":""}
+function card(e){
+  const i=D.events.indexOf(e);const c=TEAMCOL[e.team]||TEAMCOL.Club;
+  const g=e.kind==="game"&&e.home!=null;
+  const meta=[];
+  if(e.rink)meta.push(esc(e.rink));
+  if(e.address)meta.push(`<a href="${maps(e.address)}" target="_blank" rel="noopener">${esc(e.rink?"Map":e.address.replace(/, US$/,""))}</a>`);
+  if(e.gameType&&e.gameType!=="regular season")meta.push(esc(e.gameType[0].toUpperCase()+e.gameType.slice(1)));
+  const end=!e.tbd&&e.end?fmt(e.e,{hour:"numeric",minute:"2-digit"}).replace(":00",""):"";
+  return `<article class="ev ${g?(e.home?"home":"away"):""}" style="--tc:${c[0]};--tt:${c[1]}">
+   <div class="t">${time(e)}${end&&e.kind!=="game"?`<small>to ${end}</small>`:""}</div>
+   <div class="b"><div class="row">${teamPill(e.team)}${g?`<span class="pill ${e.home?"p-home":"p-away"}">${e.home?"Home":"Away"}</span>`:`<span class="kind">${KIND[e.kind]}</span>`}</div>
+    <div class="row" style="flex-wrap:nowrap">${g&&e.oppLogo?`<img class="ol" src="${esc(e.oppLogo)}" alt="" loading="lazy">`:""}<h3>${headline(e)}</h3></div>
+    ${meta.length?`<div class="m">${meta.map(x=>`<span>${x}</span>`).join("")}</div>`:""}
+    <div class="acts">${addMenu(e,i)}${e.livebarn?`<a class="btn line sm" href="${esc(e.livebarn)}" target="_blank" rel="noopener">LiveBarn</a>`:""}${e.link?`<a class="btn line sm" href="${esc(e.link)}" target="_blank" rel="noopener">GameSheet</a>`:""}</div>
+   </div></article>`;
+}
+function list(){
+  const n=now();const up=D.events.filter(e=>e.e>n&&matches(e));
+  $("#count").textContent=up.length+" on the calendar";
+  if(!up.length){$("#list").innerHTML=`<div class="empty">Nothing coming up for this filter.</div>`;return}
+  const groups=[];let k=null;
+  for(const e of up){const dk=dayKey(e.s);if(dk!==k){groups.push([e.s,[]]);k=dk}groups[groups.length-1][1].push(e)}
+  const show=groups.slice(0,state.limit);
+  $("#list").innerHTML=show.map(([d,evs])=>{const r=relDay(d);return `<div class="day"><div class="dhead"><span class="d disp">${fmt(d,{weekday:"short",month:"short",day:"numeric"})}</span>${r?`<span class="rel">${r}</span>`:""}</div>${evs.map(card).join("")}</div>`}).join("")
+   +(groups.length>show.length?`<button class="btn line more" onclick="state.limit+=14;list()">Show more dates (${groups.length-show.length} left)</button>`:"");
+}
+function results(){
+  const n=now();
+  const past=D.events.filter(e=>e.src==="gamesheet"&&e.s<n&&(state.team==="All"||e.team===state.team)).reverse();
+  const finals=past.filter(e=>e.final).length;
+  $("#rnote").textContent=past.length?(finals?finals+" final":"no scores posted yet"):"";
+  if(!past.length){$("#res").innerHTML=`<div class="empty">No ${state.team==="All"?"":esc(state.team)+" "}games played yet this season.</div>`;return}
+  $("#res").innerHTML=past.slice(0,8).map(e=>{
+    const sc=e.final?`<div class="sc ${e.us>e.them?"w":e.us<e.them?"l":""}">${e.us}-${e.them}${e.result?" "+esc(e.result):""}</div>`:`<div class="ns">Score not posted<br>on GameSheet</div>`;
+    return `<div class="rc"><div>${teamPill(e.team)} <b>${e.home?"vs":"at"} ${esc(e.opponent)}</b></div>${sc}<div class="meta">${fmt(e.s,{weekday:"short",month:"short",day:"numeric"})}${e.rink?" at "+esc(e.rink):""} · <a href="${esc(e.link)}" target="_blank" rel="noopener">Box score</a></div></div>`}).join("");
+}
+function subs(){
+  const F=D.feedBase;
+  const feed=[["12U","wolves-12u","12U games from GameSheet"],["10U","wolves-10u","10U games from GameSheet"],["All teams","wolves","Every 12U and 10U game"]];
+  $("#subs").innerHTML=feed.map(([t,s,p])=>{const ics=F+s+".ics";const wc=ics.replace(/^https:/,"webcal:");
+    return `<div class="sub"><h3 class="disp">${t}</h3><p>${p}</p><div class="acts"><a class="btn gold sm" href="${wc}">Subscribe</a><a class="btn ghost sm" href="https://calendar.google.com/calendar/r?cid=${encodeURIComponent(wc)}" target="_blank" rel="noopener">Google</a><button class="btn ghost sm" onclick="copy('${ics}')">Copy link</button><a class="btn ghost sm" href="${F+s}.rss">RSS</a></div></div>`}).join("")
+   +`<div class="sub"><h3 class="disp">Full club calendar</h3><p>Practices, 8U, Learn to Play, tournaments and WSCC rink times.</p><div class="acts"><a class="btn gold sm" href="${D.clubPage}" target="_blank" rel="noopener">Open club calendar</a></div></div>`;
+}
+function copy(t){navigator.clipboard&&navigator.clipboard.writeText(t);const el=$("#toast");el.textContent="Link copied";el.classList.add("on");setTimeout(()=>el.classList.remove("on"),1600)}
+function foot(){
+  const b=new Date(D.built);
+  $("#foot").innerHTML=`<p>Updated ${fmt(b,{month:"short",day:"numeric"})} at ${fmt(b,{hour:"numeric",minute:"2-digit",timeZoneName:"short"})}. All times Eastern.</p>
+  <p>Games, rinks and scores from <a href="${D.seasonUrl}" target="_blank" rel="noopener">GameSheet</a>. Practices, tournaments and rink sessions from the <a href="${D.clubPage}" target="_blank" rel="noopener">West Shore Wolves club calendar</a>.</p><p>West Shore Wolves Hockey Club, Scottville, Michigan</p>`;
+}
+function render(){chips();hero();list();results()}
+subs();foot();render();
+</script>
+</body>
+</html>

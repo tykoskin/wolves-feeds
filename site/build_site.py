@@ -1,0 +1,243 @@
+#!/usr/bin/env python3
+"""Build the West Shore Wolves schedule page (index.html) from real data.
+
+Sources (standard library only, same approach as gamesheet_feed.py):
+  1. GameSheet public schedule pages for 12U and 10U (games, rinks, opponents, logos, scores, LiveBarn).
+  2. The club's published Outlook calendar "West Shore Wolves Events" (the calendar behind
+     events.westshorewolves.com): practices, tournaments, 8U, Learn to Play and WSCC rink sessions.
+GameSheet wins for any 12U/10U game it lists; the matching club calendar entry only adds its street address.
+
+Usage: python3 build_site.py [output_dir]   (default: folder of this script)
+"""
+import json
+import os
+import re
+import sys
+import urllib.parse
+import urllib.request
+import shutil
+import uuid
+from datetime import datetime, timedelta, timezone
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+_parent = os.path.dirname(HERE)
+FEEDS_REPO = os.environ.get("FEEDS_REPO") or (
+    _parent if os.path.isfile(os.path.join(_parent, "gamesheet_feed.py")) else "/workspace/wolves-feeds")
+sys.path.insert(0, FEEDS_REPO if os.path.isdir(FEEDS_REPO) else HERE)
+import gamesheet_feed as gs  # noqa: E402  (reuse SEASON, TEAMS, fetch, extract_games, TZ)
+
+OUT = sys.argv[1] if len(sys.argv) > 1 else HERE
+FEED_BASE = "https://tykoskin.github.io/wolves-feeds/"
+OWA = ("https://outlook.office365.com/owa/published/951e74ceea36492c9dc438c625a09bb9@westshorewolves.com/"
+       "11d17ff53239408aa6ab470c991b280b7746953958344761427/service.svc")
+CLUB_PAGE = "https://events.westshorewolves.com"
+TEAM_ORDER = ["12U", "10U", "8U", "Learn to Play"]
+FINAL = ("final", "completed", "complete", "closed")
+
+
+# ---------- club calendar (Outlook published calendar, anonymous JSON service) ----------
+def owa_call(action, body):
+    h = {"User-Agent": gs.UA, "Accept": "*/*", "Content-Type": "application/json; charset=utf-8",
+         "Action": action, "X-Req-Source": "PublishedCalendar",
+         "X-OWA-UrlPostData": urllib.parse.quote(json.dumps(body, separators=(",", ":"))),
+         "X-OWA-CANARY": "X-OWA-CANARY_cookie_is_null_or_empty",
+         "Origin": "https://outlook.office365.com", "Cookie": "ClientId=" + uuid.uuid4().hex.upper()}
+    req = urllib.request.Request(f"{OWA}?action={action}&app=PublishedCalendar&n=0", data=b"",
+                                 headers=h, method="POST")
+    with urllib.request.urlopen(req, timeout=30) as r:
+        return json.loads(r.read())
+
+
+def club_items(start, end):
+    hdr = {"__type": "JsonRequestHeaders:#Exchange", "RequestServerVersion": "V2018_01_08",
+           "TimeZoneContext": {"__type": "TimeZoneContext:#Exchange", "TimeZoneDefinition": {
+               "__type": "TimeZoneDefinitionType:#Exchange", "Id": "Eastern Standard Time"}}}
+    s = owa_call("GetAnonymousCalendarSessionData",
+                 {"__type": "GetAnonymousCalendarSessionDataJsonRequest:#Exchange", "Header": hdr})
+    fid = s["Body"]["CalendarFolder"]["FolderId"]["Id"]
+    r = owa_call("FindItem", {
+        "__type": "FindItemJsonRequest:#Exchange", "Header": hdr,
+        "Body": {"__type": "FindItemRequest:#Exchange",
+                 "ParentFolderIds": [{"__type": "FolderId:#Exchange", "Id": fid}],
+                 "ItemShape": {"__type": "ItemResponseShape:#Exchange", "BaseShape": "IdOnly"},
+                 "Traversal": "Shallow",
+                 "Paging": {"__type": "CalendarPageView:#Exchange",
+                            "StartDate": f"{start:%Y-%m-%d}T00:00:00.000",
+                            "EndDate": f"{end:%Y-%m-%d}T23:59:59.999"}}})
+    return r["Body"]["ResponseMessages"]["Items"][0]["RootFolder"]["Items"]
+
+
+def classify_club(it):
+    subj = re.sub(r"\s+", " ", it.get("Subject") or "").strip()
+    loc = ((it.get("Location") or {}).get("DisplayName") or "").strip()
+    start = datetime.fromisoformat(it["Start"])
+    end = datetime.fromisoformat(it["End"]) if it.get("End") else None
+    m = re.match(r"^\[([^\]]+)\]\s*(.*)$", subj)
+    if m:
+        team, title = m.group(1).strip(), m.group(2).strip()
+    else:
+        m2 = re.match(r"^(\d+U)\b\s*(.*)$", subj)
+        team, title = (m2.group(1), subj) if m2 else ("Club", subj)
+    tbd = bool(re.search(r"time is TBD", title, re.I)) or (start.hour == 0 and start.minute == 0)
+    title = re.sub(r"\s*time is TBD\s*", " ", title, flags=re.I).strip()
+    if team == "WSCC":
+        kind, team = "rink", "Open Rink"
+    elif re.search(r"practice", title, re.I):
+        kind = "practice"
+    elif re.search(r"tournament|district|states|jamboree|showcase|classic|cup", title, re.I):
+        kind = "tournament"
+    elif re.search(r"\b(at|vs\.?)\b", title, re.I) and team in ("12U", "10U", "8U"):
+        kind = "game"
+    else:
+        kind = "event"
+    ev = {"src": "club", "team": team, "kind": kind, "title": title, "start": start.isoformat(),
+          "end": end.isoformat() if end else None, "tbd": tbd, "address": loc or None}
+    if kind == "game":  # "[12U] Fox Red at 12U" (home) or "12U at Grand valley" (away)
+        a = re.match(rf"^(?:{team}\s+)?at\s+(.+)$", title, re.I)
+        h = re.match(rf"^(.+?)\s+at\s+{team}$", title, re.I)
+        if h:
+            ev.update(home=True, opponent=h.group(1).strip())
+        elif a:
+            ev.update(home=False, opponent=a.group(1).strip())
+    if kind == "tournament":
+        ev["title"] = re.sub(rf"\s+at\s+{team}$", "", re.sub(rf"^{team}\s+at\s+", "", title, flags=re.I), flags=re.I)
+    return ev
+
+
+# ---------- GameSheet ----------
+def gamesheet_events():
+    out, ok = [], []
+    for team, label, _slug in gs.TEAMS:
+        try:
+            games = gs.extract_games(gs.fetch(gs.schedule_url(team)), team)
+        except Exception as e:  # noqa: BLE001
+            print(f"WARNING GameSheet {label}: {e}", file=sys.stderr)
+            continue
+        ok.append(label)
+        for g in games:
+            home, vis = g["home"], g["visitor"]
+            is_home = home.get("id") == team
+            us, them = (home, vis) if is_home else (vis, home)
+            final = (g.get("status") or "").lower() in FINAL
+            start = datetime.fromisoformat(g["timeStampZulu"].replace("Z", "+00:00"))
+            lb = ((g.get("data") or {}).get("broadcasters") or {}).get("livebarn") or {}
+            ev = {"src": "gamesheet", "team": label, "kind": "game", "home": is_home,
+                  "opponent": them.get("title") or "TBD", "oppLogo": them.get("logo") or None,
+                  "rink": g.get("location") or None, "start": start.isoformat(),
+                  "end": (start + timedelta(minutes=gs.GAME_MINUTES)).isoformat(),
+                  "gameType": (g.get("gameType") or "").replace("_", " ") or None,
+                  "number": g.get("number") or None, "status": g.get("status") or None,
+                  "division": (us.get("division") or {}).get("title") or None,
+                  "livebarn": lb.get("broadcastUrl") or None,
+                  "link": f"https://gamesheetstats.com/seasons/{gs.SEASON}/games/{g['gameId']}"}
+            if final:
+                ev.update(final=True, us=us.get("goals"), them=them.get("goals"),
+                          result=(us.get("result") or "").upper() or None)
+            out.append(ev)
+    return out, ok
+
+
+def merge(gsev, club, gs_ok):
+    """Drop club 12U/10U game entries that GameSheet covers; borrow their address."""
+    def close(a, b, hours):
+        return abs(datetime.fromisoformat(a) - datetime.fromisoformat(b)) <= timedelta(hours=hours)
+    keep = []
+    for c in club:
+        if c["kind"] == "game" and c["team"] in gs_ok:
+            twin = next((g for g in gsev if g["team"] == c["team"] and close(g["start"], c["start"], 3)), None)
+            if twin:
+                twin.setdefault("address", c.get("address"))
+                continue
+        keep.append(c)
+    return gsev + keep
+
+
+def name_addresses(evs):
+    """Give club entries a rink name when GameSheet already pairs that street address with one."""
+    norm = lambda a: re.sub(r"\W", "", (a or "").lower().replace(", us", ""))
+    names = {}
+    for e in evs:
+        if e["src"] == "gamesheet" and e.get("address") and e.get("rink"):
+            n = re.sub(r"\s+Rink\s*#?\d+$", "", e["rink"])
+            k = norm(e["address"])
+            if len(n) > len(names.get(k, "")):
+                names[k] = n
+    for e in evs:
+        if e["src"] == "club" and not e.get("rink") and norm(e.get("address")) in names:
+            e["rink"] = names[norm(e["address"])]
+    return evs
+
+
+def dedupe(evs):
+    seen, out = set(), []
+    for e in sorted(evs, key=lambda e: e["start"]):
+        k = (e["team"], e["start"], (e.get("title") or e.get("opponent") or "").lower(),
+             re.sub(r"\W", "", (e.get("address") or "").lower()))
+        if k not in seen:
+            seen.add(k)
+            out.append(e)
+    return out
+
+
+def combine_shared(evs):
+    """One card for a club event listed once per team at the same time and place (fundraisers, try hockey)."""
+    groups, out = {}, []
+    for e in evs:
+        if e["src"] == "club" and e["kind"] in ("event", "tournament") and e["team"] in TEAM_ORDER:
+            k = (e["start"], e["title"].lower().rstrip("!"), re.sub(r"\W", "", (e.get("address") or "").lower()))
+            if k in groups:
+                groups[k]["teams"].append(e["team"])
+                continue
+            e["teams"] = [e["team"]]
+            groups[k] = e
+        out.append(e)
+    for e in groups.values():
+        e["teams"] = [t for t in TEAM_ORDER if t in e["teams"]]
+        if len(e["teams"]) > 1:
+            e["team"] = "All teams" if len(e["teams"]) == len(TEAM_ORDER) else " + ".join(e["teams"])
+    return out
+
+
+def main():
+    now = datetime.now(gs.TZ)
+    gsev, gs_ok = gamesheet_events()
+    try:
+        raw = club_items(now.date() - timedelta(days=90), now.date() + timedelta(days=240))
+        club = [classify_club(i) for i in raw if i.get("Subject")]
+        club_ok = True
+    except Exception as e:  # noqa: BLE001
+        print(f"WARNING club calendar: {e}", file=sys.stderr)
+        club, club_ok = [], False
+    if not gsev and not club:
+        print("ERROR: no data from any source; page not rebuilt", file=sys.stderr)
+        return 1
+    events = combine_shared(dedupe(name_addresses(merge(gsev, club, gs_ok))))
+    present = {t for e in events for t in e.get("teams", [e["team"]])}
+    teams = [t for t in TEAM_ORDER if t in present]
+    teams += sorted(present - set(teams) - {"Open Rink"})
+    if any(e["team"] == "Open Rink" for e in events):
+        teams.append("Open Rink")
+    data = {"built": now.isoformat(), "teams": teams, "events": events, "clubOk": club_ok,
+            "gamesheetOk": gs_ok, "season": gs.SEASON, "feedBase": FEED_BASE, "clubPage": CLUB_PAGE,
+            "seasonUrl": f"https://gamesheetstats.com/seasons/{gs.SEASON}"}
+    tpl = open(os.path.join(HERE, "template.html"), encoding="utf-8").read()
+    page = tpl.replace("/*__DATA__*/null", json.dumps(data, separators=(",", ":")).replace("</", "<\\/"))
+    os.makedirs(OUT, exist_ok=True)
+    src_assets, dst_assets = os.path.join(HERE, "assets"), os.path.join(OUT, "assets")
+    if os.path.abspath(src_assets) != os.path.abspath(dst_assets):
+        shutil.copytree(src_assets, dst_assets, dirs_exist_ok=True)
+    gs.write_atomic(os.path.join(OUT, "index.html"), page)
+    print(f"Wrote {OUT}/index.html: {len(events)} events "
+          f"({sum(e['src'] == 'gamesheet' for e in events)} GameSheet games, club calendar ok={club_ok})")
+    return 0
+
+
+if __name__ == "__main__":
+    # Fail-soft: the schedule page must never break feed generation. Any error leaves the
+    # previously published page in place and exits 0 so the workflow keeps going.
+    try:
+        rc = main()
+    except Exception as e:  # noqa: BLE001
+        print(f"WARNING schedule page not rebuilt: {e!r}", file=sys.stderr)
+        rc = 0
+    sys.exit(0 if os.environ.get("SCHEDULE_FAIL_SOFT", "1") == "1" else rc)
