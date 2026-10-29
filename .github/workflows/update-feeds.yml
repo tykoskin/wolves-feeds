@@ -24,6 +24,8 @@ jobs:
           python-version: '3.12'
 
       - name: Build feeds
+        # 12U and 10U from GameSheet. 8U from the SportsEngine iCal (no GameSheet at 8U).
+        # A failed 8U fetch leaves the previous wolves-8u files and sportsengine-8u.json.
         run: python3 gamesheet_feed.py
 
       - name: Build schedule page
