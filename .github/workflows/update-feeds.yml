@@ -28,10 +28,11 @@ jobs:
 
       - name: Build schedule page
         # Fail-soft: never blocks the feed commit below. If the club Outlook calendar
-        # cannot be read, the page is built from GameSheet only.
+        # cannot be read, the page is built from GameSheet only. Builds the site root
+        # (docs/index.html), turns /schedule/ into a redirect to /, and keeps docs/CNAME.
         continue-on-error: true
         timeout-minutes: 4
-        run: python3 site/build_site.py docs/schedule
+        run: python3 site/build_site.py docs
 
       - name: Commit changed feeds
         run: |
