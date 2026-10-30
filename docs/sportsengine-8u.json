@@ -156,6 +156,32 @@
   {
     "src": "sportsengine",
     "team": "8U",
+    "kind": "game",
+    "title": "8U at Chelsea 1",
+    "start": "2026-11-08T14:00:00-05:00",
+    "end": "2026-11-08T14:21:00-05:00",
+    "tbd": false,
+    "address": "501 Coliseum Drive, Chelsea, MI, 48118-1455, US",
+    "uid": "6b9f823a-bda9-417c-8863-0d997c38ec47@sportsengine.com",
+    "home": false,
+    "opponent": "Chelsea 1"
+  },
+  {
+    "src": "sportsengine",
+    "team": "8U",
+    "kind": "game",
+    "title": "8U at Saginaw 8U Kuhn",
+    "start": "2026-11-08T14:25:00-05:00",
+    "end": "2026-11-08T14:46:00-05:00",
+    "tbd": false,
+    "address": "501 Coliseum Drive, Chelsea, MI, 48118-1455, US",
+    "uid": "7578807a-7579-4bc8-878e-ed3305bb0f5b@sportsengine.com",
+    "home": false,
+    "opponent": "Saginaw 8U Kuhn"
+  },
+  {
+    "src": "sportsengine",
+    "team": "8U",
     "kind": "tournament",
     "title": "Salute to our Veterans Jamboree",
     "start": "2026-11-08T15:00:00-05:00",
@@ -163,6 +189,32 @@
     "tbd": true,
     "address": "501 Coliseum Drive, Chelsea, MI, 48118-1455, US",
     "uid": "cb572247-6853-45cc-8a18-c1e980a0d56a@sportsengine.com"
+  },
+  {
+    "src": "sportsengine",
+    "team": "8U",
+    "kind": "game",
+    "title": "8U at 2019 Cougars Blue",
+    "start": "2026-11-08T15:40:00-05:00",
+    "end": "2026-11-08T16:01:00-05:00",
+    "tbd": false,
+    "address": "501 Coliseum Drive, Chelsea, MI, 48118-1455, US",
+    "uid": "d4deee96-ff00-4e93-ae4e-ca843ff286e7@sportsengine.com",
+    "home": false,
+    "opponent": "2019 Cougars Blue"
+  },
+  {
+    "src": "sportsengine",
+    "team": "8U",
+    "kind": "game",
+    "title": "8U at Saginaw - Brookman",
+    "start": "2026-11-08T16:05:00-05:00",
+    "end": "2026-11-08T16:26:00-05:00",
+    "tbd": false,
+    "address": "501 Coliseum Drive, Chelsea, MI, 48118-1455, US",
+    "uid": "9b808795-af03-431b-beb5-32851ad78c8d@sportsengine.com",
+    "home": false,
+    "opponent": "Saginaw - Brookman"
   },
   {
     "src": "sportsengine",
