@@ -439,6 +439,17 @@
   {
     "src": "sportsengine",
     "team": "8U",
+    "kind": "tournament",
+    "title": "Home Jamboree",
+    "start": "2027-01-23T11:00:00-05:00",
+    "end": "2027-01-23T12:00:00-05:00",
+    "tbd": true,
+    "address": "3000 North Stiles Road, Scottville, MI, 49454-9791, US",
+    "uid": "f5dfe855-36be-4b38-ad97-2bf1ebf22718@sportsengine.com"
+  },
+  {
+    "src": "sportsengine",
+    "team": "8U",
     "kind": "practice",
     "title": "Practice",
     "start": "2027-01-26T18:00:00-05:00",
@@ -505,6 +516,17 @@
   {
     "src": "sportsengine",
     "team": "8U",
+    "kind": "tournament",
+    "title": "Potential MAHA Tournament in TC",
+    "start": "2027-02-14T11:00:00-05:00",
+    "end": "2027-02-14T12:00:00-05:00",
+    "tbd": true,
+    "address": "1600 Chartwell Drive, Traverse City, MI, 49696, US",
+    "uid": "d0f8e2bc-f03c-4603-b3bb-250e930ae0b5@sportsengine.com"
+  },
+  {
+    "src": "sportsengine",
+    "team": "8U",
     "kind": "practice",
     "title": "Practice",
     "start": "2027-02-16T18:00:00-05:00",
@@ -545,5 +567,16 @@
     "tbd": false,
     "address": "3000 North Stiles Road, Scottville, MI, 49454-9791, US",
     "uid": "0e98142b-b5e9-48ea-b9cd-64e951588331@sportsengine.com"
+  },
+  {
+    "src": "sportsengine",
+    "team": "8U",
+    "kind": "tournament",
+    "title": "Home Jamboree",
+    "start": "2027-02-27T11:00:00-05:00",
+    "end": "2027-02-27T12:00:00-05:00",
+    "tbd": true,
+    "address": "3000 North Stiles Road, Scottville, MI, 49454-9791, US",
+    "uid": "b461c865-70a6-4fc4-88b6-b096f019cdab@sportsengine.com"
   }
 ]
