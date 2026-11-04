@@ -459,6 +459,8 @@ def main():
         return 1
     if ok == len(TEAMS):  # only rebuild the combined feed when every team is fresh
         all_items.sort(key=lambda x: x["start"])
+        # Lakeshore Badgers are not a Wolves feed. site/build_site.py loads Crossbar
+        # for the Badgers tab and must not be folded into wolves.ics / wolves.rss.
         write_feeds(all_items, "wolves", "West Shore Wolves Games (all teams)",
                     f"https://gamesheetstats.com/seasons/{SEASON}/schedule")
         write_index(all_items, status)

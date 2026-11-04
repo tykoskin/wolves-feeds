@@ -32,6 +32,9 @@ jobs:
         # Fail-soft: never blocks the feed commit below. If the club Outlook calendar
         # cannot be read, the page is built from GameSheet only. Builds the site root
         # (docs/index.html), turns /schedule/ into a redirect to /, and keeps docs/CNAME.
+        # Also fetches the Lakeshore Badgers Crossbar calendar and keeps games only
+        # (docs/badgers.json). A failed fetch uses that cache, then data/badgers-static.ics,
+        # and does not fail the job. Badgers stay off the Wolves RSS and ICS feeds.
         continue-on-error: true
         timeout-minutes: 4
         run: python3 site/build_site.py docs

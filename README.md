@@ -24,6 +24,7 @@ The feeds are also reachable at https://events.westshorewolves.com/<file> (same 
 - Times are shown in America/Detroit. GameSheet calendar events use UTC start times and a 75 minute default length. 8U events use the SportsEngine end time.
 - If one GameSheet page or the SportsEngine calendar cannot be fetched, that feed's old files are kept. The schedule page keeps the previous 8U events instead of dropping them. The script exits with an error only if every GameSheet fetch fails.
 - `.github/workflows/update-feeds.yml` runs every 2 hours (and on demand from the Actions tab) and commits any changed files in `docs/`.
+- The Badgers tab (after Open Rink) lists Lakeshore Badgers games from the public Crossbar calendar at `https://www.lakeshorebadgershockey.com/team/271050/ical`. Practices are left out. An all-day event, a `[TBD]` title, or a start at midnight America/Detroit is shown as time TBD. A game is home only when its location is West Shore Community College. If that download fails, the page keeps `docs/badgers.json`, then `data/badgers-static.ics`. Badgers games are not on the All tab, the Wolves next-game card, results, or any Wolves RSS/ICS feed.
 
 ## Setup
 1. Create a public repo `tykoskin/wolves-feeds` and upload these files (including `.github/` and `docs/`).
