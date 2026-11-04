@@ -238,6 +238,7 @@ function setTeam(t){
     const url=t==="All"?location.pathname+location.search:"#"+t.toLowerCase().replace(/\s+/g,"-");
     history.replaceState(null,"",url);
   }
+  try{if(window.goatcounter&&window.goatcounter.count)window.goatcounter.count({path: location.pathname + location.hash, event: false})}catch(e){}
   render();
 }
 function applyHash(){
@@ -352,5 +353,6 @@ function foot(){
 function render(){chips();hero();list();results();subs()}
 applyHash();foot();render();
 </script>
+<script data-goatcounter="https://westshorewolves.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
 </html>

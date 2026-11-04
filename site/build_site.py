@@ -304,7 +304,9 @@ REDIRECT = """<!doctype html><html lang="en"><head><meta charset="utf-8">
 <title>West Shore Wolves Schedule</title><link rel="canonical" href="%s">
 <meta http-equiv="refresh" content="0; url=../"><meta name="robots" content="noindex">
 <script>location.replace("../"+location.search+location.hash)</script></head>
-<body><p>The schedule moved to <a href="../">%s</a>.</p></body></html>
+<body><p>The schedule moved to <a href="../">%s</a>.</p>
+<script data-goatcounter="https://westshorewolves.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body></html>
 """ % (SITE, SITE)
 
 
