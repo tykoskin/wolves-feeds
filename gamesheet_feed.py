@@ -404,6 +404,7 @@ code{{font-size:.8em;color:#555}}</style></head><body>
 <p>Calendar: copy an ICS link and add it as a subscribed calendar (Google: Other calendars, From URL; iPhone: Settings, Calendar, Accounts, Add Subscribed Calendar).</p>
 <h2>Upcoming games</h2><table><tr><th>Team</th><th>When</th><th>Game</th></tr>{rows}</table>
 <p><small>Last updated {now:%b} {now.day}, {now:%Y} {now.hour % 12 or 12}:{now:%M %p %Z}.</small></p><ul><small>{note}</small></ul>
+<script data-goatcounter="https://westshorewolves.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body></html>
 """
     os.makedirs(os.path.join(OUT, "feeds"), exist_ok=True)
