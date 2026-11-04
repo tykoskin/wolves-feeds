@@ -251,20 +251,28 @@ function applyHash(){
 function setType(k){state.type=k;state.limit=12;render()}
 let heroEv=null;
 function hero(){
+  // Badgers games are only in that tab's list. The banner stays the Wolves
+  // next-up (the same one All shows), including while the Badgers tab is open.
   const n=now();
-  const pool=D.events.filter(e=>e.e>n&&matches(e));
+  const team=state.team==="Badgers"?"All":state.team;
+  const pool=D.events.filter(e=>{
+    if(e.e<=n||isBadgers(e))return false;
+    if(team==="All"){if(!wolvesOnly(e))return false}
+    else if(!(e.teams||[e.team]).includes(team))return false;
+    if(state.type==="all")return true;
+    if(state.type==="tournament")return e.kind==="tournament"||e.kind==="event";
+    return e.kind===state.type;
+  });
   const games=pool.filter(e=>e.kind==="game");
-  const e=(state.type==="all"&&state.team!=="Open Rink"?(games[0]||pool[0]):pool[0]);
+  const e=(state.type==="all"&&team!=="Open Rink"?(games[0]||pool[0]):pool[0]);
   heroEv=e;
   if(!e){$("#hero").innerHTML=`<p class="eyebrow">Next up</p><div class="hcard"><h1 class="htitle disp">Nothing scheduled yet</h1></div>`;return}
   const i=D.events.indexOf(e);
-  const us=e.team==="Badgers"
-    ?`<div class="crest txt" style="background:#711A76;color:#fff;border-color:#711A76" aria-hidden="true">LB</div>`
-    :`<div class="crest us"><img src="assets/wolves_logo.png" alt=""></div>`;
+  const us=`<div class="crest us"><img src="assets/wolves_logo.png" alt=""></div>`;
   const opp=e.oppLogo?`<div class="crest"><img src="${esc(e.oppLogo)}" alt=""></div>`:(e.opponent?`<div class="crest txt">${esc(e.opponent.replace(/^\d+U\s*/,"").split(/[^A-Za-z0-9]+/).filter(w=>w&&!/^\d+U$/i.test(w)).map(w=>w[0]).join("").slice(0,3).toUpperCase())}</div>`:"");
   const title=e.kind==="game"&&e.opponent?`${e.home?"vs":"at"} ${esc(e.opponent.replace(/^\d+U\s+/,""))}`:headline(e);
   const date=fmt(e.s,{weekday:"long",month:"long",day:"numeric"});
-  $("#hero").innerHTML=`<p class="eyebrow">Next up${state.team!=="All"?" for "+esc(state.team):""}</p>
+  $("#hero").innerHTML=`<p class="eyebrow">Next up${team!=="All"?" for "+esc(team):""}</p>
   <div class="hcard"><div style="display:grid;gap:14px">
     <div class="row" style="display:flex;gap:8px;align-items:center">${teamPill(e.team)}${e.kind==="game"&&e.home!=null?`<span class="pill ${e.home?"p-home":"p-away"}">${e.home?"Home":"Away"}</span>`:`<span class="pill p-away">${KIND[e.kind]}</span>`}${e.gameType&&e.gameType!=="regular season"?`<span class="pill p-away">${esc(e.gameType)}</span>`:""}</div>
     ${e.kind==="game"?`<div class="match">${us}<span class="vs disp">${e.home?"VS":"AT"}</span>${opp}</div>`:""}
