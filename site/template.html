@@ -168,7 +168,7 @@ footer a{color:var(--gold)}
 <script>
 const D=/*__DATA__*/null;
 const TZ="America/Detroit";
-const TEAMCOL={"12U":["#CCBF7C","#192539"],"10U":["#192539","#CCBF7C"],"8U":["#3f6e9e","#fff"],"Learn to Play":["#4f8a5b","#fff"],"Open Rink":["#8b93a1","#fff"],"Club":["#6b4f7d","#fff"]};
+const TEAMCOL={"12U":["#CCBF7C","#192539"],"10U":["#192539","#CCBF7C"],"8U":["#3f6e9e","#fff"],"Learn to Play":["#4f8a5b","#fff"],"Open Rink":["#8b93a1","#fff"],"Badgers":["#711A76","#fff"],"Club":["#6b4f7d","#fff"]};
 const KIND={game:"Game",practice:"Practice",tournament:"Tournament",event:"Event",rink:"Rink session"};
 const TYPES=[["all","Everything"],["game","Games"],["practice","Practices"],["tournament","Tournaments and events"]];
 const $=s=>document.querySelector(s);
@@ -180,14 +180,18 @@ D.events.forEach(e=>{e.s=new Date(e.start);e.e=e.end?new Date(e.end):new Date(e.
 let state={team:"All",type:"all",limit:12};
 const now=()=>new Date();
 function teamPill(t){const c=TEAMCOL[t]||TEAMCOL.Club;return `<span class="tp" style="--tc:${c[0]};--tt:${c[1]}">${esc(t)}</span>`}
+function sideName(e){return e.team==="Badgers"?"Lakeshore Badgers":e.team}
 function headline(e){
   if(e.teams&&e.teams.length>1)return esc(e.title);
-  if(e.kind==="game"&&e.opponent) return `${esc(e.team)} <span class="vsw">${e.home?"vs":"at"}</span> ${esc(e.opponent)}`;
+  if(e.kind==="game"&&e.opponent) return `${esc(sideName(e))} <span class="vsw">${e.home?"vs":"at"}</span> ${esc(e.opponent)}`;
   return esc(e.kind==="practice"&&/^practice$/i.test(e.title)?`${e.team} Practice`:e.title);
 }
 function where(e){return e.rink||(e.address&&e.address.split(",")[0])||""}
 function maps(a){return "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(a)}
-function calText(e){return e.kind==="game"&&e.opponent?`Wolves ${e.team} ${e.home?"vs":"at"} ${e.opponent}`:`Wolves ${e.team}: ${e.kind==="practice"&&/^practice$/i.test(e.title)?"Practice":e.title}`}
+function calText(e){
+  if(e.team==="Badgers")return e.kind==="game"&&e.opponent?`Lakeshore Badgers ${e.home?"vs":"at"} ${e.opponent}`:`Lakeshore Badgers: ${e.title}`;
+  return e.kind==="game"&&e.opponent?`Wolves ${e.team} ${e.home?"vs":"at"} ${e.opponent}`:`Wolves ${e.team}: ${e.kind==="practice"&&/^practice$/i.test(e.title)?"Practice":e.title}`;
+}
 function z(d){return d.toISOString().replace(/[-:]/g,"").replace(/\.\d{3}/,"")}
 function ymd(d){return fmt(d,{year:"numeric",month:"2-digit",day:"2-digit"}).replace(/(\d+)\/(\d+)\/(\d+)/,"$3$1$2")}
 function gcal(e){
@@ -199,10 +203,11 @@ function gcal(e){
 function icsFile(i){
   const e=FILTERED_ALL[i];const x=s=>String(s).replace(/\\/g,"\\\\").replace(/[;,]/g,m=>"\\"+m).replace(/\n/g,"\\n");
   const loc=[e.rink,e.address].filter(Boolean).join(", ");
-  const L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//West Shore Wolves//Schedule//EN","BEGIN:VEVENT","UID:"+z(e.s)+"-"+encodeURIComponent(e.team)+"-"+i+"@westshorewolves","DTSTAMP:"+z(new Date()),
+  const badgers=e.team==="Badgers";
+  const L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:"+(badgers?"-//Lakeshore Badgers//Schedule//EN":"-//West Shore Wolves//Schedule//EN"),"BEGIN:VEVENT","UID:"+z(e.s)+"-"+encodeURIComponent(e.team)+"-"+i+"@"+(badgers?"lakeshorebadgers":"westshorewolves"),"DTSTAMP:"+z(new Date()),
     ...(e.tbd?["DTSTART;VALUE=DATE:"+ymd(e.s),"DTEND;VALUE=DATE:"+ymd(new Date(e.s.getTime()+864e5))]:["DTSTART:"+z(e.s),"DTEND:"+z(e.e)]),
     "SUMMARY:"+x(calText(e)),...(loc?["LOCATION:"+x(loc)]:[]),...(e.link?["URL:"+e.link]:[]),"END:VEVENT","END:VCALENDAR"];
-  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([L.join("\r\n")],{type:"text/calendar"}));a.download="wolves-event.ics";a.click();
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([L.join("\r\n")],{type:"text/calendar"}));a.download=badgers?"badgers-event.ics":"wolves-event.ics";a.click();
 }
 function addMenu(e,i,cls="btn line sm"){
   return `<span class="menu"><button class="${cls}" onclick="tog(this)">+ Add to calendar</button><span class="pop"><a href="${gcal(e)}" target="_blank" rel="noopener">Google Calendar</a><button onclick="icsFile(${i})">Apple or Outlook (.ics)</button></span></span>`;
@@ -210,20 +215,39 @@ function addMenu(e,i,cls="btn line sm"){
 function tog(b){const m=b.parentNode;const o=m.classList.contains("open");document.querySelectorAll(".menu.open").forEach(x=>x.classList.remove("open"));if(!o)m.classList.add("open")}
 document.addEventListener("click",ev=>{if(!ev.target.closest(".menu"))document.querySelectorAll(".menu.open").forEach(x=>x.classList.remove("open"))});
 let FILTERED_ALL=D.events;
+function isBadgers(e){return e.team==="Badgers"||(e.teams||[]).includes("Badgers")}
+function wolvesOnly(e){return e.team!=="Open Rink"&&!isBadgers(e)}
 function matches(e){
-  if(state.team==="All"){if(e.team==="Open Rink")return false}else if(!(e.teams||[e.team]).includes(state.team))return false;
+  // "All teams" is the Wolves schedule. Open Rink and Badgers stay on their own tabs.
+  if(state.team==="All"){if(!wolvesOnly(e))return false}else if(!(e.teams||[e.team]).includes(state.team))return false;
   if(state.type==="all")return true;
   if(state.type==="tournament")return e.kind==="tournament"||e.kind==="event";
   return e.kind===state.type;
 }
 function chips(){
   const up=D.events.filter(e=>e.e>now());
-  const cnt=t=>up.filter(e=>t==="All"?e.team!=="Open Rink":(e.teams||[e.team]).includes(t)).length;
+  const cnt=t=>up.filter(e=>t==="All"?wolvesOnly(e):(e.teams||[e.team]).includes(t)).length;
   $("#chips").innerHTML=["All",...D.teams].map(t=>`<button class="chip" aria-pressed="${state.team===t}" onclick="setTeam('${t}')">${t==="All"?"All teams":esc(t)}<span class="n">${cnt(t)}</span></button>`).join("");
   const showTypes=state.team!=="Open Rink";
   $("#types").innerHTML=showTypes?TYPES.map(([k,l])=>`<button class="type" aria-pressed="${state.type===k}" onclick="setType('${k}')">${l}</button>`).join(""):"";
 }
-function setTeam(t){state.team=t;state.limit=12;if(t==="Open Rink")state.type="all";render()}
+function setTeam(t){
+  state.team=t;state.limit=12;
+  if(t==="Open Rink")state.type="all";
+  if(history.replaceState){
+    const url=t==="All"?location.pathname+location.search:"#"+t.toLowerCase().replace(/\s+/g,"-");
+    history.replaceState(null,"",url);
+  }
+  render();
+}
+function applyHash(){
+  const h=decodeURIComponent((location.hash||"").replace(/^#/,"")).trim().toLowerCase();
+  if(!h)return;
+  const hit=D.teams.find(t=>t.toLowerCase()===h||t.toLowerCase().replace(/\s+/g,"-")===h);
+  if(!hit)return;
+  state.team=hit;
+  if(hit==="Open Rink")state.type="all";
+}
 function setType(k){state.type=k;state.limit=12;render()}
 let heroEv=null;
 function hero(){
@@ -234,7 +258,9 @@ function hero(){
   heroEv=e;
   if(!e){$("#hero").innerHTML=`<p class="eyebrow">Next up</p><div class="hcard"><h1 class="htitle disp">Nothing scheduled yet</h1></div>`;return}
   const i=D.events.indexOf(e);
-  const us=`<div class="crest us"><img src="assets/wolves_logo.png" alt=""></div>`;
+  const us=e.team==="Badgers"
+    ?`<div class="crest txt" style="background:#711A76;color:#fff;border-color:#711A76" aria-hidden="true">LB</div>`
+    :`<div class="crest us"><img src="assets/wolves_logo.png" alt=""></div>`;
   const opp=e.oppLogo?`<div class="crest"><img src="${esc(e.oppLogo)}" alt=""></div>`:(e.opponent?`<div class="crest txt">${esc(e.opponent.replace(/^\d+U\s*/,"").split(/[^A-Za-z0-9]+/).filter(w=>w&&!/^\d+U$/i.test(w)).map(w=>w[0]).join("").slice(0,3).toUpperCase())}</div>`:"");
   const title=e.kind==="game"&&e.opponent?`${e.home?"vs":"at"} ${esc(e.opponent.replace(/^\d+U\s+/,""))}`:headline(e);
   const date=fmt(e.s,{weekday:"long",month:"long",day:"numeric"});
@@ -287,7 +313,8 @@ function list(){
 }
 function results(){
   const n=now();
-  const past=D.events.filter(e=>e.src==="gamesheet"&&e.s<n&&(state.team==="All"||e.team===state.team)).reverse();
+  if(state.team==="Badgers"){$("#rnote").textContent="";$("#res").innerHTML=`<div class="empty">Scores for these games are not posted here.</div>`;return}
+  const past=D.events.filter(e=>e.src==="gamesheet"&&!isBadgers(e)&&e.s<n&&(state.team==="All"||e.team===state.team)).reverse();
   const finals=past.filter(e=>e.final).length;
   $("#rnote").textContent=past.length?(finals?finals+" final":"no scores posted yet"):"";
   if(!past.length){$("#res").innerHTML=`<div class="empty">No ${state.team==="All"?"":esc(state.team)+" "}games played yet this season.</div>`;return}
@@ -297,6 +324,12 @@ function results(){
 }
 function subs(){
   const F=D.feedBase;
+  if(state.team==="Badgers"&&D.badgersUrl){
+    const ics=D.badgersUrl;
+    const wc=ics.replace(/^https:/,"webcal:");
+    $("#subs").innerHTML=`<div class="sub"><h3 class="disp">Badgers</h3><p>Lakeshore Badgers games only, from their Crossbar calendar.</p><div class="acts"><a class="btn gold sm" href="${esc(wc)}">Subscribe</a><a class="btn ghost sm" href="${esc("https://calendar.google.com/calendar/r?cid="+encodeURIComponent(wc))}" target="_blank" rel="noopener">Google</a><button class="btn ghost sm" onclick="copy(decodeURIComponent('${encodeURIComponent(ics)}'))">Copy link</button></div></div>`;
+    return;
+  }
   const feed=[["12U","wolves-12u","12U games from GameSheet"],["10U","wolves-10u","10U games from GameSheet"],["8U","wolves-8u","8U schedule from SportsEngine"],["All teams","wolves","Every 12U and 10U game"]];
   $("#subs").innerHTML=feed.map(([t,s,p])=>{const ics=F+s+".ics";const wc=ics.replace(/^https:/,"webcal:");
     return `<div class="sub"><h3 class="disp">${t}</h3><p>${p}</p><div class="acts"><a class="btn gold sm" href="${wc}">Subscribe</a><a class="btn ghost sm" href="https://calendar.google.com/calendar/r?cid=${encodeURIComponent(wc)}" target="_blank" rel="noopener">Google</a><button class="btn ghost sm" onclick="copy('${ics}')">Copy link</button><a class="btn ghost sm" href="${F+s}.rss">RSS</a></div></div>`}).join("")
@@ -306,10 +339,10 @@ function copy(t){navigator.clipboard&&navigator.clipboard.writeText(t);const el=
 function foot(){
   const b=new Date(D.built);
   $("#foot").innerHTML=`<p>Updated ${fmt(b,{month:"short",day:"numeric"})} at ${fmt(b,{hour:"numeric",minute:"2-digit",timeZoneName:"short"})}. All times Eastern.</p>
-  <p>Games, rinks and scores from <a href="${D.seasonUrl}" target="_blank" rel="noopener">GameSheet</a>. 8U schedule from <a href="wolves-8u.ics">SportsEngine</a>. Practices, tournaments and rink sessions from the <a href="${D.clubPage}" target="_blank" rel="noopener">West Shore Wolves club calendar</a>.</p><p><a href="feeds/">All feed links (RSS and calendar)</a></p><p>West Shore Wolves Hockey Club, Scottville, Michigan</p>`;
+  <p>Games, rinks and scores from <a href="${D.seasonUrl}" target="_blank" rel="noopener">GameSheet</a>. 8U schedule from <a href="wolves-8u.ics">SportsEngine</a>. Practices, tournaments and rink sessions from the <a href="${D.clubPage}" target="_blank" rel="noopener">West Shore Wolves club calendar</a>. Lakeshore Badgers games from <a href="${esc(D.badgersUrl||"")}" target="_blank" rel="noopener">Crossbar</a>.</p><p><a href="feeds/">All feed links (RSS and calendar)</a></p><p>West Shore Wolves Hockey Club, Scottville, Michigan</p>`;
 }
-function render(){chips();hero();list();results()}
-subs();foot();render();
+function render(){chips();hero();list();results();subs()}
+applyHash();foot();render();
 </script>
 </body>
 </html>

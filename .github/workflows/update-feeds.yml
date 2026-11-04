@@ -30,8 +30,11 @@ jobs:
 
       - name: Build schedule page
         # Fail-soft: never blocks the feed commit below. If the club Outlook calendar
-        # cannot be read, the page is built from GameSheet only. Builds the site root
-        # (docs/index.html), turns /schedule/ into a redirect to /, and keeps docs/CNAME.
+        # cannot be read, the page is built from GameSheet only. Also refreshes the
+        # Lakeshore Badgers tab from the Crossbar games-only calendar. A failed Badgers
+        # fetch keeps docs/badgers.json, then data/badgers-static.ics, and does not
+        # fail this step. Builds the site root (docs/index.html), turns /schedule/
+        # into a redirect to /, and keeps docs/CNAME.
         continue-on-error: true
         timeout-minutes: 4
         run: python3 site/build_site.py docs

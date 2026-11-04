@@ -6,10 +6,15 @@ Sources (standard library only, same approach as gamesheet_feed.py):
   2. The club's published Outlook calendar "West Shore Wolves Events" (the calendar behind
      events.westshorewolves.com): practices, tournaments, 8U, Learn to Play and WSCC rink sessions.
   3. SportsEngine's public iCal for 8U (no GameSheet at that age). See gamesheet_feed.SPORTSENGINE_8U.
+  4. Lakeshore Badgers games from the public Crossbar games-only calendar (BADGERS_URL).
+     Those games are a separate "Badgers" tab. They are not Wolves events: they stay out of the
+     All view and out of the wolves.ics / wolves.rss feeds built by gamesheet_feed.py.
 GameSheet wins for any 12U/10U game it lists; the matching club calendar entry only adds its street address.
 SportsEngine wins for an 8U-only item Outlook also lists (same day, same title). A club event posted
 for 8U and another team stays a single Outlook card. If the SportsEngine fetch fails, the previous
-8U events are kept (docs/sportsengine-8u.json, or the last built page).
+8U events are kept (docs/sportsengine-8u.json, or the last built page). If the Badgers fetch fails,
+the previous docs/badgers.json is kept, then data/badgers-static.ics. A failed Badgers fetch
+does not fail the build.
 
 Usage: python3 build_site.py [output_dir]   (default: folder of this script)
 """
@@ -40,6 +45,15 @@ CLUB_PAGE = ("https://outlook.office365.com/calendar/published/951e74ceea36492c9
 CUSTOM_DOMAIN = "events.westshorewolves.com"
 TEAM_ORDER = ["12U", "10U", "8U", "Learn to Play"]
 FINAL = ("final", "completed", "complete", "closed")
+# Public games-only Crossbar calendar (name "Crossbar - Timothy"). Not a Wolves feed.
+# "@" / "at" is away, "vs" is home. Home ice is West Shore Community College, Scottville.
+# TBD games are all-day VALUE=DATE events whose summary starts with "[TBD]".
+BADGERS_URL = ("https://www.lakeshorebadgershockey.com/calendar/ical/998506"
+               "?member=Timothy&type=games_only")
+BADGERS_CACHE = "badgers.json"
+BADGERS_TBD_RE = re.compile(r"^\s*\[TBD\]\s*", re.I)
+BADGERS_GAME_RE = re.compile(r"^(?:lakeshore\s+badgers\s+)?(vs\.?|@|at)\s+(.+)$", re.I)
+BADGERS_RINK_RE = re.compile(r"^(.+?\b(?:Ice Arena|Sports Complex|Community College|Arena))\b", re.I)
 
 
 # ---------- club calendar (Outlook published calendar, anonymous JSON service) ----------
@@ -303,6 +317,168 @@ def write_cname():
         gs.write_atomic(path, CUSTOM_DOMAIN + "\n")
 
 
+def badgers_static_path():
+    for root in (FEEDS_REPO, _parent):
+        path = os.path.join(root, "data", "badgers-static.ics")
+        if os.path.isfile(path):
+            return path
+    return os.path.join(FEEDS_REPO, "data", "badgers-static.ics")
+
+
+def badgers_cache_path():
+    return os.path.join(OUT, BADGERS_CACHE)
+
+
+def ics_calname(text):
+    for line in gs.unfold_ics(text):
+        if line.upper().startswith("X-WR-CALNAME") and ":" in line:
+            return gs.ics_unesc(line.split(":", 1)[1]).strip()
+    return ""
+
+
+def badgers_rink(loc):
+    """Short place name. Home games are at West Shore Community College in Scottville."""
+    if not loc:
+        return None
+    if re.search(r"west shore community", loc, re.I):
+        return "West Shore Community College"
+    m = BADGERS_RINK_RE.match(loc)
+    return m.group(1).strip() if m else None
+
+
+def parse_badgers(text):
+    """Games from the Crossbar calendar, in the page's event shape.
+
+    Summaries look like "Lakeshore Badgers @ Hudsonville" (away) or
+    "Lakeshore Badgers vs Cadillac" (home). A leading "[TBD]" or an all-day
+    DATE value means the faceoff time is not set. A local midnight start is
+    treated the same way, so a later export that uses 00:00 instead of DATE
+    still shows as TBD instead of 12:00 AM.
+    """
+    events = []
+    for props in gs.ics_vevents(text):
+        bag = {}
+        for name, params, val in props:
+            bag.setdefault(name, (params, val))
+        if "DTSTART" not in bag or "SUMMARY" not in bag:
+            continue
+        raw = (bag["SUMMARY"][1] or "").strip()
+        marked_tbd = bool(BADGERS_TBD_RE.search(raw))
+        summary = BADGERS_TBD_RE.sub("", raw).strip()
+        m = BADGERS_GAME_RE.match(summary)
+        if not m:
+            continue
+        marker, opponent = m.group(1), re.sub(r"\s+", " ", m.group(2)).strip()
+        if not opponent:
+            continue
+        home = marker.lower().startswith("vs")
+        start, date_only = gs.parse_ics_dt(*bag["DTSTART"])
+        start = start.astimezone(gs.TZ)
+        end = None
+        if "DTEND" in bag:
+            end_dt, _date_only = gs.parse_ics_dt(*bag["DTEND"])
+            end_dt = end_dt.astimezone(gs.TZ)
+            if end_dt > start:
+                end = end_dt
+        loc = (bag.get("LOCATION") or (None, ""))[1].strip() or None
+        tbd = date_only or marked_tbd or (start.hour == 0 and start.minute == 0)
+        ev = {"src": "badgers", "team": "Badgers", "kind": "game", "home": home,
+              "opponent": opponent,
+              "title": f"Lakeshore Badgers {'vs' if home else 'at'} {opponent}",
+              "start": start.isoformat(), "end": end.isoformat() if end else None,
+              "tbd": tbd, "address": loc}
+        rink = badgers_rink(loc)
+        if rink:
+            ev["rink"] = rink
+        uid = (bag.get("UID") or (None, ""))[1].strip()
+        if uid:
+            ev["uid"] = uid
+        events.append(ev)
+    events.sort(key=lambda e: (e["start"], e.get("opponent") or ""))
+    return events
+
+
+def format_badgers_line(ev):
+    start = datetime.fromisoformat(ev["start"]).astimezone(gs.TZ)
+    clock = "TBD" if ev.get("tbd") else f"{start:%I:%M %p}".lstrip("0")
+    return f"  {start:%a %b} {start.day}, {clock}, {'vs' if ev.get('home') else 'at'} {ev.get('opponent')}"
+
+
+def load_badgers_cache():
+    try:
+        with open(badgers_cache_path(), encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception:  # noqa: BLE001
+        return []
+    if not isinstance(data, list):
+        return []
+    return [e for e in data if isinstance(e, dict) and e.get("team") == "Badgers" and e.get("start")]
+
+
+def load_badgers_static():
+    path = badgers_static_path()
+    try:
+        with open(path, encoding="utf-8") as f:
+            return parse_badgers(f.read())
+    except OSError as e:
+        print(f"WARNING Badgers static file: {e}", file=sys.stderr)
+        return []
+
+
+def save_badgers_cache(events):
+    os.makedirs(OUT, exist_ok=True)
+    gs.write_atomic(badgers_cache_path(), json.dumps(events, indent=2) + "\n")
+
+
+def badgers_events():
+    """Return (events, fresh). A failed fetch must not fail the page build.
+
+    Order: live Crossbar games, then the last good docs/badgers.json, then
+    data/badgers-static.ics.
+    """
+    try:
+        body = gs.fetch(BADGERS_URL, accept="text/calendar, text/plain, */*")
+        name = ics_calname(body)
+        events = parse_badgers(body)
+        if not events:
+            raise RuntimeError(f"no games in {name or 'Badgers calendar'}")
+        save_badgers_cache(events)
+        label = name or "Crossbar"
+        print(f"Badgers: {len(events)} games from {label}")
+        for ev in events:
+            print(format_badgers_line(ev))
+        return events, True
+    except Exception as e:  # noqa: BLE001
+        print(f"WARNING Badgers feed: {e}", file=sys.stderr)
+    cached = load_badgers_cache()
+    if cached:
+        print(f"Badgers: using {len(cached)} cached games", file=sys.stderr)
+        return cached, False
+    static = load_badgers_static()
+    if static:
+        print(f"Badgers: using {len(static)} games from {badgers_static_path()}", file=sys.stderr)
+        try:
+            save_badgers_cache(static)
+        except Exception as e:  # noqa: BLE001
+            print(f"WARNING Badgers cache write: {e}", file=sys.stderr)
+        return static, False
+    print("WARNING Badgers: no games available", file=sys.stderr)
+    return [], False
+
+
+def place_badgers_tab(teams):
+    """Put Badgers after the rink tab. That tab is Open Rink, which is already last.
+
+    A tab literally named "Rink Info" is the rink tab instead, and Badgers follows it.
+    """
+    teams = [t for t in teams if t != "Badgers"]
+    if "Rink Info" in teams:
+        teams.insert(teams.index("Rink Info") + 1, "Badgers")
+    else:
+        teams.append("Badgers")
+    return teams
+
+
 def write_schedule_redirect():
     """Old /schedule/ URL now forwards to the site root. Only touches OUT/schedule/."""
     sched = os.path.join(OUT, "schedule")
@@ -330,18 +506,25 @@ def main():
         se = previous_sportsengine(os.path.join(OUT, "index.html"))
         if se:
             print(f"8U SportsEngine: restored {len(se)} events from the previous page", file=sys.stderr)
+    badgers, badgers_ok = badgers_events()
+    # Same guard as before: a Wolves-source outage must leave the published page
+    # in place, even when the Badgers calendar itself was read successfully.
     if not gsev and not club and not se:
         print("ERROR: no data from any source; page not rebuilt", file=sys.stderr)
         return 1
     merged = merge_sportsengine(merge(gsev, club, gs_ok), se)
-    events = combine_shared(dedupe(name_addresses(merged)))
+    # Badgers stay out of combine_shared: they are not a TEAM_ORDER club event.
+    events = combine_shared(dedupe(name_addresses(merged + badgers)))
     present = {t for e in events for t in e.get("teams", [e["team"]])}
     teams = [t for t in TEAM_ORDER if t in present]
-    teams += sorted(present - set(teams) - {"Open Rink"})
+    teams += sorted(present - set(teams) - {"Open Rink", "Badgers"})
     if any(e["team"] == "Open Rink" for e in events):
         teams.append("Open Rink")
+    if any(e["team"] == "Badgers" for e in events):
+        teams = place_badgers_tab(teams)
     data = {"built": now.isoformat(), "teams": teams, "events": events, "clubOk": club_ok,
-            "gamesheetOk": gs_ok, "sportsengineOk": se_ok, "season": gs.SEASON,
+            "gamesheetOk": gs_ok, "sportsengineOk": se_ok, "badgersOk": badgers_ok,
+            "badgersUrl": BADGERS_URL, "season": gs.SEASON,
             "feedBase": FEED_BASE, "clubPage": CLUB_PAGE,
             "seasonUrl": f"https://gamesheetstats.com/seasons/{gs.SEASON}"}
     tpl = open(os.path.join(HERE, "template.html"), encoding="utf-8").read()
@@ -353,9 +536,12 @@ def main():
     gs.write_atomic(os.path.join(OUT, "index.html"), page)
     write_schedule_redirect()
     n_se = sum(e.get("src") == "sportsengine" for e in events)
+    n_badgers = sum(e.get("team") == "Badgers" for e in events)
     print(f"Wrote {OUT}/index.html: {len(events)} events "
           f"({sum(e['src'] == 'gamesheet' for e in events)} GameSheet games, "
-          f"{n_se} SportsEngine 8U, club calendar ok={club_ok}, sportsengine fresh={se_ok})")
+          f"{n_se} SportsEngine 8U, {n_badgers} Badgers, "
+          f"club calendar ok={club_ok}, sportsengine fresh={se_ok}, badgers fresh={badgers_ok})")
+    print(f"Tabs: {', '.join(teams)}")
     return 0
 
 
