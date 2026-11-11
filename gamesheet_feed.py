@@ -331,10 +331,80 @@ def sportsengine_feed_items(events):
     return items
 
 
+def load_cancellations():
+    """Overrides in data/cancellations.json. Each entry marks matching events cancelled.
+
+    date is the America/Detroit calendar day (YYYY-MM-DD). title is matched inside
+    the event title; "&" and "and" are the same. team, when set, must match.
+    time, when set, is the local 24-hour start ("13:00") and limits the entry to
+    that session. Omit time to mark every match that day. Events are not removed.
+    """
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "cancellations.json")
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        return []
+    except Exception as e:  # noqa: BLE001
+        print(f"WARNING cancellations: {e}", file=sys.stderr)
+        return []
+    if isinstance(data, dict):
+        data = data.get("cancellations") or []
+    return [r for r in data if isinstance(r, dict) and r.get("date") and r.get("title")]
+
+
+def _norm_label(text):
+    return re.sub(r"[^a-z0-9]+", " ", (text or "").lower().replace("&", " and ")).strip()
+
+
+def cancellation_match(rule, start, title, team=None):
+    local = start.astimezone(TZ)
+    if local.date().isoformat() != str(rule.get("date")):
+        return False
+    want_team = (rule.get("team") or "").strip()
+    if want_team and (team or "").strip().lower() != want_team.lower():
+        return False
+    want_time = (rule.get("time") or "").strip()
+    if want_time and local.strftime("%H:%M") != want_time:
+        return False
+    needle = _norm_label(rule.get("title"))
+    return bool(needle) and needle in _norm_label(title)
+
+
+def apply_cancellations(events, start_key="start", title_key="title", team_key="team", warn=True):
+    """Set cancelled=True on matching events. Returns how many were marked."""
+    rules = load_cancellations()
+    if not rules:
+        return 0
+    used = [False] * len(rules)
+    n = 0
+    for e in events:
+        raw = e.get(start_key)
+        if not raw:
+            continue
+        start = raw if isinstance(raw, datetime) else datetime.fromisoformat(raw)
+        title = e.get(title_key) or ""
+        team = e.get(team_key)
+        hit = False
+        for i, rule in enumerate(rules):
+            if cancellation_match(rule, start, title, team):
+                used[i] = True
+                hit = True
+        if hit and not e.get("cancelled"):
+            e["cancelled"] = True
+            n += 1
+    if warn:
+        for rule, ok in zip(rules, used):
+            if not ok:
+                print(f"WARNING cancellation matched nothing: {rule}", file=sys.stderr)
+    return n
+
+
 def write_feeds(items, slug, title, page, source_note=None, prodid=None):
     now = datetime.now(timezone.utc)
     source_note = source_note or f"{title}, from GameSheet. Times are Eastern (America/Detroit)."
     prodid = prodid or "-//West Shore Wolves//GameSheet feed//EN"
+    apply_cancellations(items, title_key="title", team_key="label", warn=False)
     rss = ['<?xml version="1.0" encoding="UTF-8"?>',
            '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel>',
            f"<title>{html.escape(title)}</title>",
@@ -343,8 +413,11 @@ def write_feeds(items, slug, title, page, source_note=None, prodid=None):
            f"<description>{html.escape(source_note)}</description>",
            f"<lastBuildDate>{format_datetime(now)}</lastBuildDate>", "<ttl>120</ttl>"]
     for it in items:
+        rss_title = it["title"]
+        if it.get("cancelled") and not rss_title.upper().startswith("CANCELLED:"):
+            rss_title = "CANCELLED: " + rss_title
         rss.append("<item>"
-                   f"<title>{html.escape(it['title'])}</title>"
+                   f"<title>{html.escape(rss_title)}</title>"
                    f"<link>{html.escape(it['link'])}</link>"
                    f'<guid isPermaLink="false">{html.escape(it["uid"])}</guid>'
                    f"<pubDate>{format_datetime(it['start'])}</pubDate>"
@@ -359,6 +432,8 @@ def write_feeds(items, slug, title, page, source_note=None, prodid=None):
     for it in items:
         end = it.get("end") or (it["start"] + timedelta(minutes=GAME_MINUTES))
         summary = it["title"].split(": ", 1)[1] if ": " in it["title"] else it["title"]
+        if it.get("cancelled") and not summary.upper().startswith("CANCELLED:"):
+            summary = "CANCELLED: " + summary
         body = ["BEGIN:VEVENT", f"UID:{it['uid']}", f"DTSTAMP:{stamp}"]
         if it.get("tbd"):
             local = it.get("local") or it["start"].astimezone(TZ)
@@ -369,7 +444,10 @@ def write_feeds(items, slug, title, page, source_note=None, prodid=None):
             # Both must be written as Zulu; formatting a local datetime and appending Z is wrong.
             body += [f"DTSTART:{it['start'].astimezone(timezone.utc):%Y%m%dT%H%M%SZ}",
                      f"DTEND:{end.astimezone(timezone.utc):%Y%m%dT%H%M%SZ}"]
-        body += [f"SUMMARY:{ics_esc(summary)}", f"LOCATION:{ics_esc(it['loc'])}",
+        body += [f"SUMMARY:{ics_esc(summary)}"]
+        if it.get("cancelled"):
+            body.append("STATUS:CANCELLED")
+        body += [f"LOCATION:{ics_esc(it['loc'])}",
                  f"DESCRIPTION:{ics_esc(it['desc'])}", f"URL:{it['link']}", "END:VEVENT"]
         ics += body
     ics.append("END:VCALENDAR")

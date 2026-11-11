@@ -50,6 +50,8 @@ header.top:after{content:"";position:absolute;inset:auto -10% -60px -10%;height:
 .pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
 .p-home{background:var(--gold);color:var(--navy)}
 .p-away{background:transparent;color:var(--gold);box-shadow:inset 0 0 0 1.5px var(--gold)}
+.p-cancel{background:#b42318;color:#fff;box-shadow:none}
+.struck{text-decoration:line-through;opacity:.72}
 .cd{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .cd div{background:rgba(0,0,0,.22);border-radius:12px;padding:10px 4px;text-align:center}
 .cd b{display:block;font-family:"WolvesDisplay",Impact,sans-serif;font-weight:400;font-size:38px;line-height:1;color:var(--gold)}
@@ -189,8 +191,10 @@ function headline(e){
 function where(e){return e.rink||(e.address&&e.address.split(",")[0])||""}
 function maps(a){return "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(a)}
 function calText(e){
-  if(e.team==="Badgers")return e.kind==="game"&&e.opponent?`Lakeshore Badgers ${e.home?"vs":"at"} ${e.opponent}`:`Lakeshore Badgers: ${e.title}`;
-  return e.kind==="game"&&e.opponent?`Wolves ${e.team} ${e.home?"vs":"at"} ${e.opponent}`:`Wolves ${e.team}: ${e.kind==="practice"&&/^practice$/i.test(e.title)?"Practice":e.title}`;
+  const base=e.team==="Badgers"
+    ?(e.kind==="game"&&e.opponent?`Lakeshore Badgers ${e.home?"vs":"at"} ${e.opponent}`:`Lakeshore Badgers: ${e.title}`)
+    :(e.kind==="game"&&e.opponent?`Wolves ${e.team} ${e.home?"vs":"at"} ${e.opponent}`:`Wolves ${e.team}: ${e.kind==="practice"&&/^practice$/i.test(e.title)?"Practice":e.title}`);
+  return e.cancelled?`CANCELLED: ${base}`:base;
 }
 function z(d){return d.toISOString().replace(/[-:]/g,"").replace(/\.\d{3}/,"")}
 function ymd(d){return fmt(d,{year:"numeric",month:"2-digit",day:"2-digit"}).replace(/(\d+)\/(\d+)\/(\d+)/,"$3$1$2")}
@@ -206,7 +210,7 @@ function icsFile(i){
   const badgers=e.team==="Badgers";
   const L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:"+(badgers?"-//Lakeshore Badgers//Schedule//EN":"-//West Shore Wolves//Schedule//EN"),"BEGIN:VEVENT","UID:"+z(e.s)+"-"+encodeURIComponent(e.team)+"-"+i+"@"+(badgers?"lakeshorebadgers":"westshorewolves"),"DTSTAMP:"+z(new Date()),
     ...(e.tbd?["DTSTART;VALUE=DATE:"+ymd(e.s),"DTEND;VALUE=DATE:"+ymd(new Date(e.s.getTime()+864e5))]:["DTSTART:"+z(e.s),"DTEND:"+z(e.e)]),
-    "SUMMARY:"+x(calText(e)),...(loc?["LOCATION:"+x(loc)]:[]),...(e.link?["URL:"+e.link]:[]),"END:VEVENT","END:VCALENDAR"];
+    "SUMMARY:"+x(calText(e)),...(e.cancelled?["STATUS:CANCELLED"]:[]),...(loc?["LOCATION:"+x(loc)]:[]),...(e.link?["URL:"+e.link]:[]),"END:VEVENT","END:VCALENDAR"];
   const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([L.join("\r\n")],{type:"text/calendar"}));a.download=badgers?"badgers-event.ics":"wolves-event.ics";a.click();
 }
 function addMenu(e,i,cls="btn line sm"){
@@ -275,9 +279,9 @@ function hero(){
   const date=fmt(e.s,{weekday:"long",month:"long",day:"numeric"});
   $("#hero").innerHTML=`<p class="eyebrow">Next up${team!=="All"?" for "+esc(team):""}</p>
   <div class="hcard"><div style="display:grid;gap:14px">
-    <div class="row" style="display:flex;gap:8px;align-items:center">${teamPill(e.team)}${e.kind==="game"&&e.home!=null?`<span class="pill ${e.home?"p-home":"p-away"}">${e.home?"Home":"Away"}</span>`:`<span class="pill p-away">${KIND[e.kind]}</span>`}${e.gameType&&e.gameType!=="regular season"?`<span class="pill p-away">${esc(e.gameType)}</span>`:""}</div>
+    <div class="row" style="display:flex;gap:8px;align-items:center">${e.cancelled?`<span class="pill p-cancel">Cancelled</span>`:""}${teamPill(e.team)}${e.kind==="game"&&e.home!=null?`<span class="pill ${e.home?"p-home":"p-away"}">${e.home?"Home":"Away"}</span>`:`<span class="pill p-away">${KIND[e.kind]}</span>`}${e.gameType&&e.gameType!=="regular season"?`<span class="pill p-away">${esc(e.gameType)}</span>`:""}</div>
     ${e.kind==="game"?`<div class="match">${us}<span class="vs disp">${e.home?"VS":"AT"}</span>${opp}</div>`:""}
-    <h1 class="htitle disp">${title}</h1>
+    <h1 class="htitle disp${e.cancelled?" struck":""}">${title}</h1>
     <div class="hmeta"><span><b>${date}</b></span><span>${e.tbd?"Time TBD":time(e)}</span>${where(e)?`<span>${esc(where(e))}</span>`:""}</div>
   </div><div style="display:grid;gap:14px">
     <div class="cd" id="cd"></div>
@@ -304,8 +308,8 @@ function card(e){
   const end=!e.tbd&&e.end?fmt(e.e,{hour:"numeric",minute:"2-digit"}).replace(":00",""):"";
   return `<article class="ev ${g?(e.home?"home":"away"):""}" style="--tc:${c[0]};--tt:${c[1]}">
    <div class="t">${time(e)}${end&&e.kind!=="game"?`<small>to ${end}</small>`:""}</div>
-   <div class="b"><div class="row">${teamPill(e.team)}${g?`<span class="pill ${e.home?"p-home":"p-away"}">${e.home?"Home":"Away"}</span>`:`<span class="kind">${KIND[e.kind]}</span>`}</div>
-    <div class="row" style="flex-wrap:nowrap">${g&&e.oppLogo?`<img class="ol" src="${esc(e.oppLogo)}" alt="" loading="lazy">`:""}<h3>${headline(e)}</h3></div>
+   <div class="b"><div class="row">${e.cancelled?`<span class="pill p-cancel">Cancelled</span>`:""}${teamPill(e.team)}${g?`<span class="pill ${e.home?"p-home":"p-away"}">${e.home?"Home":"Away"}</span>`:`<span class="kind">${KIND[e.kind]}</span>`}</div>
+    <div class="row" style="flex-wrap:nowrap">${g&&e.oppLogo?`<img class="ol" src="${esc(e.oppLogo)}" alt="" loading="lazy">`:""}<h3 class="${e.cancelled?"struck":""}">${headline(e)}</h3></div>
     ${meta.length?`<div class="m">${meta.map(x=>`<span>${x}</span>`).join("")}</div>`:""}
     <div class="acts">${addMenu(e,i)}${e.livebarn?`<a class="btn line sm" href="${esc(e.livebarn)}" target="_blank" rel="noopener">LiveBarn</a>`:""}${e.link?`<a class="btn line sm" href="${esc(e.link)}" target="_blank" rel="noopener">GameSheet</a>`:""}</div>
    </div></article>`;
