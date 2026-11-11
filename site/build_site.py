@@ -517,6 +517,12 @@ def main():
     merged = merge_sportsengine(merge(gsev, club, gs_ok), se)
     # Badgers stay out of combine_shared: they are not a TEAM_ORDER club event.
     events = combine_shared(dedupe(name_addresses(merged + badgers)))
+    n_cancel = gs.apply_cancellations(events)
+    if n_cancel:
+        print(f"Cancelled {n_cancel} events from data/cancellations.json")
+        for e in events:
+            if e.get("cancelled"):
+                print(f"  {e.get('team')} {e.get('start')} {e.get('title')}")
     present = {t for e in events for t in e.get("teams", [e["team"]])}
     teams = [t for t in TEAM_ORDER if t in present]
     teams += sorted(present - set(teams) - {"Open Rink", "Badgers"})
