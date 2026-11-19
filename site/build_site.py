@@ -11,7 +11,9 @@ Sources (standard library only, same approach as gamesheet_feed.py):
      All view and out of the wolves.ics / wolves.rss feeds built by gamesheet_feed.py.
 GameSheet wins for any 12U/10U game it lists; the matching club calendar entry only adds its street address.
 SportsEngine wins for an 8U-only item Outlook also lists (same day, same title). A club event posted
-for 8U and another team stays a single Outlook card. If the SportsEngine fetch fails, the previous
+for 8U and another team stays a single Outlook card. If the club Outlook calendar cannot be
+read, the previous page's club events are kept so practices and rink sessions stay on the page.
+If the SportsEngine fetch fails, the previous
 8U events are kept (docs/sportsengine-8u.json, or the last built page). If the Badgers fetch fails,
 the previous docs/badgers.json is kept, then data/badgers-static.ics. A failed Badgers fetch
 does not fail the build.
@@ -270,6 +272,24 @@ def previous_sportsengine(path):
     return [e for e in data.get("events", []) if e.get("src") == "sportsengine"]
 
 
+def previous_club(path):
+    """Club-calendar events already embedded in the last built page. Used only when the
+    Outlook fetch fails, so one bad run cannot publish a page with no practices, rink
+    sessions or tournaments."""
+    try:
+        text = open(path, encoding="utf-8").read()
+    except OSError:
+        return []
+    m = re.search(r"const D=(\{.*?\});\nconst TZ", text)
+    if not m:
+        return []
+    try:
+        data = json.loads(m.group(1))
+    except json.JSONDecodeError:
+        return []
+    return [e for e in data.get("events", []) if e.get("src") == "club"]
+
+
 def dedupe(evs):
     seen, out = set(), []
     for e in sorted(evs, key=lambda e: e["start"]):
@@ -503,6 +523,9 @@ def main():
     except Exception as e:  # noqa: BLE001
         print(f"WARNING club calendar: {e}", file=sys.stderr)
         club, club_ok = [], False
+        club = previous_club(os.path.join(OUT, "index.html"))
+        if club:
+            print(f"club calendar: kept {len(club)} events from the previous page", file=sys.stderr)
     se, se_ok = gs.eight_u_events(now)
     if not se_ok and not se:
         se = previous_sportsengine(os.path.join(OUT, "index.html"))

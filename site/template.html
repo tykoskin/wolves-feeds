@@ -356,6 +356,8 @@ function foot(){
 }
 function render(){chips();hero();list();results();subs()}
 applyHash();foot();render();
+// A phone or browser can keep an old copy of this page for days. Compare with the live copy once and reload if it is newer.
+try{fetch(location.pathname,{cache:"no-store"}).then(r=>r.text()).then(t=>{const m=t.match(/"built":"([^"]+)"/);const k="wsw-reload-"+(m&&m[1]);if(m&&m[1]!==D.built&&!sessionStorage.getItem(k)){sessionStorage.setItem(k,"1");location.reload()}}).catch(()=>{})}catch(e){}
 </script>
 <script data-goatcounter="https://westshorewolves.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
