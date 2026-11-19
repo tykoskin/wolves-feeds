@@ -1,6 +1,12 @@
 [
   {"date": "2026-11-11", "title": "Sticks & Pucks", "team": "Open Rink"},
+  {"date": "2026-11-24", "title": "Public Skate", "team": "Open Rink"},
   {"date": "2026-11-29", "title": "Drop-In Hockey", "team": "Open Rink"},
+  {"date": "2026-12-04", "title": "Public Skate", "team": "Open Rink"},
+  {"date": "2026-12-04", "title": "Sticks & Pucks", "team": "Open Rink"},
   {"date": "2026-12-05", "title": "Public Skate", "team": "Open Rink"},
+  {"date": "2026-12-10", "title": "Sticks & Pucks", "team": "Open Rink", "time": "13:00"},
+  {"date": "2026-12-11", "title": "Public Skate", "team": "Open Rink"},
+  {"date": "2026-12-11", "title": "Sticks & Pucks", "team": "Open Rink"},
   {"date": "2026-12-12", "title": "Public Skate", "team": "Open Rink"}
 ]
